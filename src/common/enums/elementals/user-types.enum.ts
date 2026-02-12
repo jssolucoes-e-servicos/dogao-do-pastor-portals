@@ -1,0 +1,11 @@
+// src/enums/elementals/user-types.enum.ts
+
+/**
+ * Enum de tipos de usuários
+ * @returns {string} retorna enum de tipos de usuários
+ */
+export enum UserTypesEnum {
+  PARTNER = 'PARTNER',
+  CUSTOMER = 'CUSTOMER',
+  CONTRIBUTOR = 'CONTRIBUTOR',
+}
