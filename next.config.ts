@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/comprar',
+        permanent: false,
+      },
+    ]
+  },
   reactCompiler: true,
    images: {
     remotePatterns: [new URL('https://minio-server.jssolucoeseservicos.com.br/**')],
