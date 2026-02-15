@@ -9,7 +9,8 @@ export const ListPartnersAllAction = async (): Promise<PartnerEntity[]> => {
     // Note que usamos uma rota diferente, focada em administração
     const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/all`, {
       method: 'GET',
-      next: { revalidate: 0 } // Garante dados sempre frescos no ERP
+      cache: "no-store"
+      //next: { revalidate: 0 } // Garante dados sempre frescos no ERP
     });
     return data as PartnerEntity[];
   } catch (error: any) {
