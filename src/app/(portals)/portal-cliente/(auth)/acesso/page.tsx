@@ -1,7 +1,12 @@
 "use client"
 
+import { AuthCustomerLoginAction } from "@/actions/auth/customer-login.action"
+import { NumbersHelper } from "@/common/helpers/numbers-helper"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
-import Cookies from "js-cookie"
 import { Loader2, Lock, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -11,15 +16,9 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import * as z from "zod"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { NumbersHelper } from "@/common/helpers/numbers-helper"
-
 // Schema específico para Cliente (CPF)
-const clientLoginSchema = z.object({
-  username: z.string().min(14, "CPF inválido"),
+const customerLoginSchema = z.object({
+  username: z.string().min(11, "CPF inválido"),
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
 })
 
@@ -27,40 +26,24 @@ export default function ClientLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const form = useForm<z.infer<typeof clientLoginSchema>>({
-    resolver: zodResolver(clientLoginSchema),
+  const form = useForm<z.infer<typeof customerLoginSchema>>({
+    resolver: zodResolver(customerLoginSchema),
     defaultValues: { username: "", password: "" },
   })
 
-  async function onSubmit(values: z.infer<typeof clientLoginSchema>) {
+    async function onSubmit(values: z.infer<typeof customerLoginSchema>) {
     setIsLoading(true)
-
     const loginAction = async () => {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL
-      const response = await fetch(`${baseUrl}/auth/customers/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: NumbersHelper.clean(values.username),
-          password: values.password,
-        }),
-      })
-
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.message || "Credenciais inválidas.")
-      
-      // Cookies do Cliente (ddp-ctm)
-      Cookies.set("ddp-ctm-00", data.access_token, { expires: 7 }) // Clientes costumam ficar logados mais tempo
-      Cookies.set("ddp-ctm-01", JSON.stringify(data.user), { expires: 7 })
-        
-      return data
+      return await AuthCustomerLoginAction({
+        username: values.username.replace(/\D/g, ""),
+        password: values.password,
+      });
     }
-
     toast.promise(loginAction(), {
-      loading: "Entrando no seu portal...",
+      loading: "Autenticando...",
       success: () => {
         router.push("/portal-cliente")
-        return "Olá! Bem-vindo de volta."
+        return "Bem-vindo ao Portal do Cliente!"
       },
       error: (err) => {
         setIsLoading(false)

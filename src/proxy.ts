@@ -12,6 +12,11 @@ const PORTALS = {
     auth: '/portal-cliente/acesso',
     cookies: ['ddp-ctm-00', 'ddp-ctm-01'],
   },
+  CONTRIBUTOR: {
+    base: '/erp',
+    auth: '/erp/acesso',
+    cookies: ['ddp-ctb-00', 'ddp-ctb-01'],
+  },
 } as const;
 
 export function proxy(request: NextRequest) {
@@ -46,5 +51,6 @@ export const config = {
   matcher: [
     '/portal-parceiro/:path*',
     '/portal-cliente/:path*',
+    '/erp/:path*',
   ],
 };

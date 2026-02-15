@@ -23,11 +23,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { partnerLoginSchema } from "@/lib/validations/auth"
 import Image from "next/image"
-
-// ==========================================
-// CONFIGURAÇÃO DE TESTE: 
-const USAR_LOGIN_SIMULADO = false 
-// ==========================================
+import { AuthPartnerLoginAction } from "@/actions/auth/partner-login.action"
 
 const maskCNPJ = (v: string) => v.replace(/\D/g, "").replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2").slice(0, 18)
 
@@ -42,39 +38,12 @@ export default function PartnerLoginPage() {
 
   async function onSubmit(values: z.infer<typeof partnerLoginSchema>) {
     setIsLoading(true)
-
     const loginAction = async () => {
-      if (USAR_LOGIN_SIMULADO) {
-        // Simula delay de rede
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        
-        // Cria o cookie que o middleware espera para liberar o acesso
-        Cookies.set("dogao.partner.token", "token-fake-de-sessao", { expires: 1 }) // Expira em 1 dia
-        
-        return { message: "Login simulado com sucesso!" }
-      }
-
-      // LOGIN REAL (Quando a API estiver pronta)
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL
-      const response = await fetch(`${baseUrl}/auth/partners/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: values.username.replace(/\D/g, ""),
-          password: values.password,
-        }),
-      })
-
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.message || "Credenciais inválidas.")
-      
-      Cookies.set("ddp-prt-00", data.access_token, { expires: 1 }) // Expira em 1 dia
-      Cookies.set("ddp-prt-01", JSON.stringify(data.user) , { expires: 1 }) // Expira em 1 dia
-        
-      // Aqui a API deve retornar o Set-Cookie ou você seta o token vindo no body
-      return data
+      return await AuthPartnerLoginAction({
+        username: values.username.replace(/\D/g, ""),
+        password: values.password,
+      });
     }
-
     toast.promise(loginAction(), {
       loading: "Autenticando...",
       success: () => {
@@ -101,21 +70,11 @@ export default function PartnerLoginPage() {
               priority
             />
           </div>
-          {USAR_LOGIN_SIMULADO && (
-            <span className="mt-2 text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded">
-              MODO SIMULAÇÃO ATIVO
-            </span>
-          )}
         </div>
 
         <Card className="border-none shadow-xl">
           <CardHeader>
             <CardTitle>Portal do Parceiro</CardTitle>
-            <CardDescription>
-              {USAR_LOGIN_SIMULADO 
-                ? "Digite qualquer dado para entrar." 
-                : "Acesse seu painel administrativo."}
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -170,9 +129,9 @@ export default function PartnerLoginPage() {
             </Form>
           </CardContent>
           <CardFooter className="text-center justify-center">
-            <p className="text-sm text-slate-500">
-              Esqueceu a senha? <Link href="/parceiros/acesso/recuperar-senha" className="text-orange-600 font-bold">Clique aqui</Link>
-            </p>
+            {/* <p className="text-sm text-slate-500">
+              Esqueceu a senha? <Link href="/portal-parceiro/acesso/recuperar-senha" className="text-orange-600 font-bold">Clique aqui</Link>
+            </p> */}
           </CardFooter>
         </Card>
       </div>
