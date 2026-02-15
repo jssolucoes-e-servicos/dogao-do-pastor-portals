@@ -2,8 +2,8 @@
 
 import { fetchApi, FetchCtx } from "@/lib/api";
 import Cookies from "js-cookie";
-import { redirect } from "next/dist/server/api-utils";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 interface AuthPartnerLoginActionProps {
   username: string;
