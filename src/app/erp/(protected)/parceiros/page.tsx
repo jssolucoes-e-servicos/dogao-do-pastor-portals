@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-
+export const dynamic = 'force-dynamic'
 export default async function PartnersPage() {
   // Busca inicial server-side
   const partners = await ListPartnersAllAction();

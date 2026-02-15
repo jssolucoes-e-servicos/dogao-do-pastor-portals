@@ -2,28 +2,35 @@
 "use client"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/ui/sidebar"
-import { ChevronRight, LayoutDashboard, Settings, ShoppingCart, Store, Users } from "lucide-react"
+import { ChevronRight, LayoutDashboard, Users } from "lucide-react"
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
   {
+    title: "Entidades Parceiras",
+    icon: Users,
+    items: [
+      { title: "Cadastros", url: "/erp/parceiros" },
+    ],
+  }
+  /* {
     title: "Vendas",
     icon: ShoppingCart,
     items: [
       { title: "Pedidos Online", url: "/erp/orders" },
       { title: "Relatórios", url: "/erp/sales-reports" },
     ],
-  },
-  {
+  }, */
+ /*  {
     title: "Cadastros",
     icon: Store,
     items: [
       { title: "Parceiros (Doação)", url: "/erp/partners" },
       { title: "Produtos", url: "/erp/products" },
     ],
-  },
-  { title: "Clientes", icon: Users, url: "/erp/customers" },
-  { title: "Configurações", icon: Settings, url: "/erp/settings" },
+  }, */
+  /* { title: "Clientes", icon: Users, url: "/erp/customers" }, */
+  /* { title: "Configurações", icon: Settings, url: "/erp/settings" }, */
 ]
 
 export function ErpSidebar() {

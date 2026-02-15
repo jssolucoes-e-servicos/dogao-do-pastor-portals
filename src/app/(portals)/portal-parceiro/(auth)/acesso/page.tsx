@@ -1,17 +1,17 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import Cookies from "js-cookie"
 import { Building2, Loader2, Lock } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import * as z from "zod"
+export const dynamic = 'force-dynamic'
 
+import { AuthPartnerLoginAction } from "@/actions/auth/partner-login.action"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -23,7 +23,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { partnerLoginSchema } from "@/lib/validations/auth"
 import Image from "next/image"
-import { AuthPartnerLoginAction } from "@/actions/auth/partner-login.action"
 
 const maskCNPJ = (v: string) => v.replace(/\D/g, "").replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2").slice(0, 18)
 

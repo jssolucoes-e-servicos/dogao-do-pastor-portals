@@ -1,6 +1,9 @@
 // src/app/erp/(auth)/acesso/page.tsx
 "use client"
 
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, Lock, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -8,10 +11,7 @@ import { Fragment, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import * as z from "zod"
-
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+export const dynamic = 'force-dynamic'
 // Importação fictícia da action de login do ERP - ajuste conforme seu arquivo real
 import { AuthContributorLoginAction } from "@/actions/auth/contributor-login.action"
 

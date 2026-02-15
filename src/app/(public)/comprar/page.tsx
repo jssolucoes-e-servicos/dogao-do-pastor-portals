@@ -1,6 +1,6 @@
 // pre-venda/page.tsx
 import { OrderOnlineInitialStep } from '@/components/orders-online/initial';
-
+export const dynamic = 'force-dynamic'
 import { Fragment } from 'react';
 
 interface PreVendaProps {

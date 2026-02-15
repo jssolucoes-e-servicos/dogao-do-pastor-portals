@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ReceiptModal } from './components/receipt-modal';
 import { WithdrawalModal } from './components/withdrawal-modal';
-
+export const dynamic = 'force-dynamic'
 interface WithdrawalRecord {
   id: string;
   time: string;

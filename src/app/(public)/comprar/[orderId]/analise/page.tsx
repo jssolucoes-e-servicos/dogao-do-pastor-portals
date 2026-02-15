@@ -2,6 +2,7 @@ import { SiteOrderStepEnum } from "@/common/enums";
 import { OrderInAnalisys } from "@/components/orders-online/steps/analisys/order-in-analisys";
 import { StepsRouter } from "@/components/orders-online/steps/steps.router";
 import { Fragment } from "react";
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{ orderId: string }>

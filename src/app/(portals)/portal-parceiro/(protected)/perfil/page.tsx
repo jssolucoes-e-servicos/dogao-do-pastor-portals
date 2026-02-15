@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPartnerSession } from '@/lib/auth-partner-session';
 import { AlertCircle, Building2, Mail, MapPin, Phone } from 'lucide-react';
 import { redirect } from 'next/navigation';
-
+export const dynamic = 'force-dynamic'
 import { GetByIdAction } from '@/actions/partners/get-by-id.action';
 import Link from 'next/link';
 import { LogoUpload } from './components/logo-upload';
