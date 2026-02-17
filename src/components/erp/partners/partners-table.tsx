@@ -5,48 +5,70 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Clock, Edit, Eye, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Edit, Eye, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { InvitePartnerModal } from "./invite-partner-modal";
+import useSWR from "swr";
+import { ListPartnersAllAction } from "@/actions/partners/list-partners-all.action";
 
 interface Props {
   initialData: PartnerEntity[];
 }
 
 export function PartnersTable({ initialData }: Props) {
+  const { data: partners, isValidating } = useSWR<PartnerEntity[]>(
+    "partners-list", 
+    () => ListPartnersAllAction(), 
+    {
+      fallbackData: initialData,
+      revalidateOnFocus: false,
+    }
+  );
+
+  const displayData = partners || initialData;
+
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border relative">
+      {isValidating && (
+        <div className="absolute top-2 right-2">
+          <Loader2 className="h-4 w-4 animate-spin text-orange-500 opacity-50" />
+        </div>
+      )}
+
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="font-bold">Instituição / Nome Fantasia</TableHead>
-            <TableHead className="font-bold">Responsável</TableHead>
-            <TableHead className="font-bold text-center">Status</TableHead>
-            <TableHead className="font-bold text-center">Aprovação</TableHead>
-            <TableHead className="text-right font-bold">Ações</TableHead>
+            <TableHead className="font-bold text-xs uppercase">Instituição</TableHead>
+            <TableHead className="font-bold text-xs uppercase">Responsável</TableHead>
+            <TableHead className="font-bold text-xs uppercase text-center">Status</TableHead>
+            <TableHead className="font-bold text-xs uppercase text-center">Aprovação</TableHead>
+            <TableHead className="text-right font-bold text-xs uppercase">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {initialData.length === 0 ? (
+          {displayData.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                 <div className="flex flex-col items-center gap-2">
                   <AlertCircle className="h-8 w-8 opacity-20" />
-                  <p>Nenhum parceiro cadastrado.</p>
+                  <p>Nenhum parceiro encontrado.</p>
                 </div>
               </TableCell>
             </TableRow>
           ) : (
-            initialData.map((partner) => {
-              const isInvitePending = partner.name.includes("Parceiro temporário");
+            displayData.map((partner) => {
+              // Verifica se é apenas um convite (não preenchido pelo parceiro)
+              const isInviteOnly = partner.name?.includes("Parceiro temporário") || !partner.responsibleName;
+              // Verifica se o parceiro já completou o cadastro (bloqueia delete)
+              const hasCompletedRegistration = !!partner.responsibleName && !partner.name?.includes("Parceiro temporário");
 
               return (
                 <TableRow key={partner.id} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="py-4">
                     <div className="flex flex-col">
                       <span className={cn(
-                        "font-bold",
-                        isInvitePending ? "text-orange-600/70 italic" : "text-foreground"
+                        "font-bold text-sm",
+                        isInviteOnly ? "text-orange-600/70 italic" : "text-foreground"
                       )}>
                         {partner.name}
                       </span>
@@ -64,7 +86,7 @@ export function PartnersTable({ initialData }: Props) {
                       </div>
                     ) : (
                       <span className="text-[11px] text-slate-400 italic bg-slate-100 px-2 py-0.5 rounded">
-                        Aguardando preenchimento...
+                        Link enviado...
                       </span>
                     )}
                   </TableCell>
@@ -97,26 +119,34 @@ export function PartnersTable({ initialData }: Props) {
 
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      {/* Se o convite está pendente, mostramos o botão de Reenvio (Modal) */}
-                      {isInvitePending && (
+                      {/* Sempre mostramos o botão de reenvio para pendentes */}
+                      {!partner.approved && (
                         <InvitePartnerModal partner={partner} mode="resend" />
                       )}
 
-                      <Button variant="ghost" size="icon" title="Visualizar" asChild>
-                        <Link href={`/erp/partners/${partner.id}`}>
-                          <Eye className="h-4 w-4 text-blue-600" />
-                        </Link>
-                      </Button>
-                      
-                      <Button variant="ghost" size="icon" title="Editar" asChild>
-                        <Link href={`/erp/partners/${partner.id}/editar`}>
-                          <Edit className="h-4 w-4 text-slate-600" />
-                        </Link>
-                      </Button>
+                      {/* Visualizar e Editar: Apenas se não for convite pendente */}
+                      {!isInviteOnly && (
+                        <>
+                          <Button variant="ghost" size="icon" title="Visualizar" asChild>
+                            <Link href={`/erp/parceiros/${partner.id}`}>
+                              <Eye className="h-4 w-4 text-blue-600" />
+                            </Link>
+                          </Button>
+                          
+                          <Button variant="ghost" size="icon" title="Editar" asChild>
+                            <Link href={`/erp/parceiros/${partner.id}/editar`}>
+                              <Edit className="h-4 w-4 text-slate-600" />
+                            </Link>
+                          </Button>
+                        </>
+                      )}
 
-                      <Button variant="ghost" size="icon" title="Excluir" className="hover:bg-red-50">
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      {/* Excluir: Apenas para registros que NUNCA completaram o cadastro */}
+                      {!hasCompletedRegistration && (
+                        <Button variant="ghost" size="icon" title="Excluir Convite" className="hover:bg-red-50">
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

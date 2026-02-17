@@ -1,10 +1,7 @@
-// src/app/erp/partners/page.tsx
+// src/app/erp/(protected)/partners/page.tsx
 import { ListPartnersAllAction } from "@/actions/partners/list-partners-all.action";
 import { InvitePartnerModal } from "@/components/erp/partners/invite-partner-modal";
 import { PartnersTable } from "@/components/erp/partners/partners-table";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import Link from "next/link";
 import { Suspense } from "react";
 export const dynamic = 'force-dynamic'
 export default async function PartnersPage() {
@@ -21,11 +18,11 @@ export default async function PartnersPage() {
         
         <div className="flex items-center gap-3">
           <InvitePartnerModal />
-          <Button asChild className="bg-orange-600 hover:bg-orange-700">
+          {/* <Button asChild className="bg-orange-600 hover:bg-orange-700">
             <Link href="/erp/partners/novo">
               <Plus className="mr-2 h-4 w-4" /> Novo Cadastro
             </Link>
-          </Button>
+          </Button> */}
         </div>
       </div>
 

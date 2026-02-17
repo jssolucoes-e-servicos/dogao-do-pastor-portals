@@ -63,11 +63,12 @@ export const partnerUpdateSchema = z.object({
    * A obrigatoriedade para NOVOS cadastros é validada no onSubmit do formulário.
    */
   password: z
-    .string()
-    .optional()
-    .refine((val) => !val || val.length >= 6, {
-      message: "A senha deve ter pelo menos 6 caracteres",
-    }),
+  .string()
+  .optional()
+  .transform(val => val === "" ? undefined : val) // 👈 Transforma string vazia em undefined
+  .refine((val) => !val || val.length >= 6, {
+    message: "A senha deve ter pelo menos 6 caracteres",
+  }),
 
   addresInLine: z
     .string()

@@ -1,9 +1,10 @@
 // src/components/erp/partners/invite-partner-modal.tsx
 "use client"
 
-import { Check, Copy, Loader2, Send, Share2, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, Copy, Loader2, Send, Share2, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useSWRConfig } from "swr"; // Import para gerenciar a mutação global
 
 import { GenerateInviteAction } from "@/actions/partners/generate-invite.action";
 import { SendInviteAction } from "@/actions/partners/send-invite.action";
@@ -21,11 +22,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface InvitePartnerModalProps {
-  partner?: PartnerEntity; // Opcional: se enviado, funciona como reenvio
+  partner?: PartnerEntity;
   mode?: "create" | "resend";
 }
 
 export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerModalProps) {
+  const { mutate } = useSWRConfig(); // Hook para disparar o refresh da tabela
+  
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -34,7 +37,7 @@ export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerMo
   const [showPhoneInput, setShowPhoneInput] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  // Se for modo reenvio, já prepara a URL ao abrir
+  // Se estiver em modo reenvio, gera a URL do parceiro recebido
   useEffect(() => {
     if (partner && mode === "resend") {
       setInviteUrl(`${window.location.origin}/parceiros/cadastro/${partner.id}`);
@@ -48,8 +51,13 @@ export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerMo
       const url = `${window.location.origin}/parceiros/cadastro/${newPartner.id}`;
       setInviteUrl(url);
       setPartnerCreated(newPartner);
+      
+      // Notifica o SWR que a lista de parceiros mudou
+      mutate("partners-list"); 
+      
+      toast.success("Registro de convite criado com sucesso!");
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Erro ao gerar convite.");
     } finally {
       setLoading(false);
     }
@@ -57,17 +65,17 @@ export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerMo
 
   const handleSendWhatsApp = async () => {
     if (!phoneNumber || phoneNumber.length < 10) {
-      toast.error("Número inválido.");
+      toast.error("Por favor, informe um número de WhatsApp válido.");
       return;
     }
     setSending(true);
     try {
       if (partnerCreated) {
         await SendInviteAction(partnerCreated, phoneNumber);
-        toast.success("Convite enviado!");
+        toast.success("Link enviado para o WhatsApp!");
       }
     } catch (error: any) {
-      toast.error("Erro ao enviar.");
+      toast.error("Falha ao enviar mensagem.");
     } finally {
       setSending(false);
     }
@@ -80,6 +88,15 @@ export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerMo
     }
     setShowPhoneInput(false);
     setPhoneNumber("");
+  };
+
+  const copyToClipboard = () => {
+    if (inviteUrl) {
+      navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      toast.success("Link copiado para a área de transferência!");
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
@@ -103,53 +120,71 @@ export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerMo
           </DialogTitle>
           <DialogDescription>
             {showPhoneInput 
-              ? "Informe o número do responsável."
-              : "O parceiro ficará ativo somente após completar o cadastro."
+              ? "Informe o número do responsável para enviar o link de cadastro."
+              : "O parceiro ficará ativo somente após completar o cadastro através do link."
             }
           </DialogDescription>
         </DialogHeader>
 
         {!inviteUrl ? (
+          /* PASSO 1: GERAR */
           <div className="flex flex-col gap-4 py-4">
-            <p className="text-sm text-muted-foreground text-center">Deseja gerar um link único?</p>
+            <p className="text-sm text-muted-foreground text-center">
+              Deseja criar um registro temporário e gerar um link único?
+            </p>
             <Button onClick={handleGenerate} disabled={loading} className="w-full">
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Confirmar e Gerar"}
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {loading ? "Processando..." : "Confirmar e Gerar"}
             </Button>
           </div>
         ) : !showPhoneInput ? (
-          <div className="space-y-4 py-4">
+          /* PASSO 2: LINK E OPÇÕES */
+          <div className="space-y-4 py-4 animate-in fade-in duration-300">
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase text-muted-foreground">Link de Cadastro</Label>
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground">Link do Parceiro</Label>
               <div className="flex items-center space-x-2">
                 <Input value={inviteUrl} readOnly className="h-10 bg-muted/50 font-mono text-xs" />
-                <Button size="icon" variant="outline" onClick={() => {
-                  navigator.clipboard.writeText(inviteUrl);
-                  setCopied(true);
-                  toast.success("Copiado!");
-                  setTimeout(() => setCopied(false), 2000);
-                }}>
+                <Button size="icon" variant="outline" onClick={copyToClipboard} className="shrink-0">
                   {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
-            <Button className="bg-green-600 hover:bg-green-700 w-full" onClick={() => setShowPhoneInput(true)}>
-              <Send className="mr-2 h-4 w-4" /> Enviar via WhatsApp
-            </Button>
+            
+            <div className="flex flex-col gap-2 pt-2">
+              <Button 
+                variant="default" 
+                className="bg-green-600 hover:bg-green-700 w-full"
+                onClick={() => setShowPhoneInput(true)}
+              >
+                <Send className="mr-2 h-4 w-4" /> Enviar via WhatsApp
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-4 py-4">
-            <Label className="text-[10px] font-bold uppercase">WhatsApp (DDD + Número)</Label>
-            <Input 
-              placeholder="51999999999"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-              className="h-12 text-lg tracking-widest"
-            />
+          /* PASSO 3: TELEFONE */
+          <div className="space-y-4 py-4 animate-in slide-in-from-right-4 duration-300">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase">Número com DDD (Apenas números)</Label>
+              <Input 
+                placeholder="51999999999"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+                autoFocus
+                className="h-12 text-lg tracking-widest"
+              />
+            </div>
+            
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={() => setShowPhoneInput(false)} disabled={sending}>Voltar</Button>
-              <Button onClick={handleSendWhatsApp} disabled={sending || !phoneNumber} className="bg-green-600">
+              <Button variant="outline" onClick={() => setShowPhoneInput(false)} disabled={sending}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+              </Button>
+              <Button 
+                onClick={handleSendWhatsApp} 
+                disabled={sending || !phoneNumber}
+                className="bg-green-600 hover:bg-green-700"
+              >
                 {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                Enviar
+                {sending ? "Enviando..." : "Enviar Agora"}
               </Button>
             </div>
           </div>
