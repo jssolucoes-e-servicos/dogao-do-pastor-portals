@@ -1,37 +1,39 @@
 "use client"
 
+import { ListPartnersAllAction } from "@/actions/partners/list-partners-all.action";
 import { PartnerEntity } from "@/common/entities";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Clock, Edit, Eye, Trash2, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Edit, Eye, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { InvitePartnerModal } from "./invite-partner-modal";
 import useSWR from "swr";
-import { ListPartnersAllAction } from "@/actions/partners/list-partners-all.action";
+import { InvitePartnerModal } from "./invite-partner-modal";
 
 interface Props {
   initialData: PartnerEntity[];
 }
 
 export function PartnersTable({ initialData }: Props) {
-  const { data: partners, isValidating } = useSWR<PartnerEntity[]>(
-    "partners-list", 
-    () => ListPartnersAllAction(), 
-    {
-      fallbackData: initialData,
-      revalidateOnFocus: false,
-    }
+  const { data: partners, error, isLoading } = useSWR<PartnerEntity[]>(
+    `partners-list`,
+    () => ListPartnersAllAction()
   );
 
   const displayData = partners || initialData;
 
   return (
     <div className="rounded-md border relative">
-      {isValidating && (
+      {isLoading && (
         <div className="absolute top-2 right-2">
           <Loader2 className="h-4 w-4 animate-spin text-orange-500 opacity-50" />
+        </div>
+      )}
+
+      {error && (
+        <div className="absolute top-2 right-2">
+          Erro ao carregar os dados: {error.message}
         </div>
       )}
 

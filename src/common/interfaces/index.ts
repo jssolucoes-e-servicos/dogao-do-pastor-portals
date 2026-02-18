@@ -4,12 +4,12 @@ import { IEditionResponse } from './edition-response.interface';
 import { IOrderInit } from './order-init.interface';
 import { IOrderItemSend } from './order-items-send.interface';
 import { IPartnerVerifyLinkResponse } from './partner-verify-link-response.interface';
+import { IResponse } from './response.interface';
 import { IStepOrderType } from './step-order-type.interface';
 
 export type {
-  ICotentStepOrderType,
-  ICustomerOrderPayload,
+  ICotentStepOrderType, ICustomerOrderPayload,
   IEditionResponse, IOrderInit,
-  IOrderItemSend, IPartnerVerifyLinkResponse, IStepOrderType
+  IOrderItemSend, IPartnerVerifyLinkResponse, IResponse, IStepOrderType
 };
 

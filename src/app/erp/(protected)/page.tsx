@@ -17,19 +17,19 @@ export default async function ErpDashboard() {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 12.450,00</div>
-            <p className="text-xs text-muted-foreground">+20.1% em relação ao mês passado</p>
+            <div className="text-2xl font-bold"> carregando ... {/* R$ 12.450,00 */}</div>
+            <p className="text-xs text-muted-foreground">carregando ... {/* +20.1% em relação ao mês passado */}</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Doações do Mês</CardTitle>
+            <CardTitle className="text-sm font-medium">Doações Totais</CardTitle>
             <Heart className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">452 Unid.</div>
-            <p className="text-xs text-muted-foreground">+12% em relação ao mês passado</p>
+            <div className="text-2xl font-bold">carregando ...{/* 452 Unid. */}</div>
+            <p className="text-xs text-muted-foreground">carregando ...{/* +12% em relação ao mês passado */}</p>
           </CardContent>
         </Card>
 
@@ -39,8 +39,8 @@ export default async function ErpDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
-            <p className="text-xs text-muted-foreground">+180.1% desde a última semana</p>
+            <div className="text-2xl font-bold">carregando ...{/* +2350 */}</div>
+            <p className="text-xs text-muted-foreground">carregando ...{/* +180.1% desde a última semana */}</p>
           </CardContent>
         </Card>
 
@@ -50,7 +50,7 @@ export default async function ErpDashboard() {
             <TrendingUp className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">carregando ...{/* 12 */}</div>
             <p className="text-xs text-muted-foreground">Aguardando aprovação manual</p>
           </CardContent>
         </Card>

@@ -31,23 +31,28 @@ export default function ClientLoginPage() {
     defaultValues: { username: "", password: "" },
   })
 
-    async function onSubmit(values: z.infer<typeof customerLoginSchema>) {
+  async function onSubmit(values: z.infer<typeof customerLoginSchema>) {
     setIsLoading(true)
     const loginAction = async () => {
-      return await AuthCustomerLoginAction({
-        username: values.username.replace(/\D/g, ""),
+      const result = await AuthCustomerLoginAction({
+        username: values.username,
         password: values.password,
       });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result;
     }
+
     toast.promise(loginAction(), {
-      loading: "Autenticando...",
+      loading: "Autenticando no Portal do Cliente...",
       success: () => {
         router.push("/portal-cliente")
-        return "Bem-vindo ao Portal do Cliente!"
+        return "Acesso autorizado. Bem-vindo!"
       },
       error: (err) => {
         setIsLoading(false)
-        return err.message
+        return err.message || "Falha na autenticação."
       },
     })
   }
@@ -90,6 +95,7 @@ export default function ClientLoginPage() {
                             type="tel"
                             {...field} 
                             onChange={(e) => field.onChange(NumbersHelper.maskCPF(e.target.value))}
+                            disabled={isLoading}
                           />
                         </div>
                       </FormControl>
@@ -107,7 +113,13 @@ export default function ClientLoginPage() {
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                          <Input type="password" placeholder="••••••••" className="pl-10 h-11" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            className="pl-10 h-11"
+                            disabled={isLoading} 
+                            {...field} 
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -131,7 +143,7 @@ export default function ClientLoginPage() {
             </p>
             <div className="pt-2 border-t w-full">
               <p className="text-xs text-slate-400">
-                Ainda não tem conta? <Link href="/site/cadastro" className="text-slate-700 font-bold hover:underline">Cadastre-se no site</Link>
+                Ainda não tem conta? <Link href="/comprar" className="text-slate-700 font-bold hover:underline">Acesse para comprar</Link>
               </p>
             </div>
           </CardFooter>

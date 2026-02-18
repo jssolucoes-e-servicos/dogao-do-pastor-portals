@@ -31,12 +31,15 @@ export default function ErpLoginPage() {
 
   async function onSubmit(values: z.infer<typeof erpLoginSchema>) {
     setIsLoading(true)
-    
     const loginAction = async () => {
-      return await AuthContributorLoginAction({
+      const result = await AuthContributorLoginAction({
         username: values.username,
         password: values.password,
       });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result;
     }
 
     toast.promise(loginAction(), {
@@ -47,7 +50,7 @@ export default function ErpLoginPage() {
       },
       error: (err) => {
         setIsLoading(false)
-        return err.message || "Credenciais inválidas."
+        return err.message || "Falha na autenticação."
       },
     })
   }
@@ -77,6 +80,7 @@ export default function ErpLoginPage() {
                     placeholder="meu.email@smartfoods.com" 
                     type="text"
                     {...field} 
+                    disabled={isLoading}
                   />
                 </div>
               </FormControl>
@@ -99,6 +103,7 @@ export default function ErpLoginPage() {
                     placeholder="••••••••" 
                     className="pl-10 h-12 bg-muted/50 focus-visible:ring-orange-600" 
                     {...field} 
+                    disabled={isLoading}
                   />
                 </div>
               </FormControl>

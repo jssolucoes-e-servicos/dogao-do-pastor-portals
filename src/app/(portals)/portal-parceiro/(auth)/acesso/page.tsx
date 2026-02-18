@@ -36,25 +36,30 @@ export default function PartnerLoginPage() {
   })
 
   async function onSubmit(values: z.infer<typeof partnerLoginSchema>) {
-    setIsLoading(true)
-    const loginAction = async () => {
-      return await AuthPartnerLoginAction({
-        username: values.username.replace(/\D/g, ""),
-        password: values.password,
-      });
+      setIsLoading(true)
+      const loginAction = async () => {
+        const result = await AuthPartnerLoginAction({
+          username: values.username,
+          password: values.password,
+        });
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+        return result;
+      }
+  
+      toast.promise(loginAction(), {
+        loading: "Autenticando no Portal do Parceiro...",
+        success: () => {
+          router.push("/portal-parceiro")
+          return "Acesso autorizado. Bem-vindo!"
+        },
+        error: (err) => {
+          setIsLoading(false)
+          return err.message || "Falha na autenticação."
+        },
+      })
     }
-    toast.promise(loginAction(), {
-      loading: "Autenticando...",
-      success: () => {
-        router.push("/portal-parceiro")
-        return "Bem-vindo ao Portal do Parceiro!"
-      },
-      error: (err) => {
-        setIsLoading(false)
-        return err.message
-      },
-    })
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -91,6 +96,7 @@ export default function PartnerLoginPage() {
                             className="pl-10" 
                             placeholder="00.000.000/0000-00" 
                             {...field} 
+                            disabled={isLoading}
                             onChange={(e) => field.onChange(maskCNPJ(e.target.value))}
                           />
                         </div>
@@ -109,7 +115,13 @@ export default function PartnerLoginPage() {
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                          <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            className="pl-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />

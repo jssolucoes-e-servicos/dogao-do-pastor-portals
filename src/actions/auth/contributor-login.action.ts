@@ -1,6 +1,7 @@
 // src/actions/auth/contributor-login.action.ts
 "use server";
 
+import { IResponse } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -10,7 +11,8 @@ interface AuthContributorLoginActionProps {
   password: string;
 }
 
-export const AuthContributorLoginAction = async (values: AuthContributorLoginActionProps): Promise<boolean> => {
+export const AuthContributorLoginAction = async (values: AuthContributorLoginActionProps): 
+Promise<IResponse> => {
   try {
     const data = await fetchApi(FetchCtx.CUSTOMER, `/auth/contributor/login`, {
       method: 'POST',
@@ -21,7 +23,7 @@ export const AuthContributorLoginAction = async (values: AuthContributorLoginAct
     });
 
     if (!data.access_token) {
-        throw new Error("Token não recebido.");
+      return { success: false, error: "Credenciais inválidas ou token não recebido."};
     }
 
     const cookieStore = await cookies();
@@ -43,10 +45,14 @@ export const AuthContributorLoginAction = async (values: AuthContributorLoginAct
         secure: process.env.NODE_ENV === "production"
     });
 
-    return true;
+    return { success: true };
   } catch (error: any) {
     console.error("Erro no login do colaborador:", error);
-    throw new Error(error.message || 'Falha ao processar seu acesso.');
+    const errorMessage = error.message || 'Falha ao processar seu acesso.';
+    return {
+      success: false,
+      error: errorMessage
+    }
   }
 };
 
