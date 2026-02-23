@@ -7,6 +7,7 @@ import { NumbersHelper } from '@/common/helpers/numbers-helper';
 import { IOrderItemSend } from '@/common/interfaces';
 import HotDogModal from '@/components/modals/hotdog-modal';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Minus, Plus, PlusCircle, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -112,9 +113,29 @@ export function ItemsForm({ order }: { order: OrderEntity }) {
 
       <div className="space-y-4">
         {groupedItems.length === 0 ? (
-          <div className="text-center py-10 border-2 border-dashed rounded-md text-gray-400">
-            <p>Seu carrinho está vazio.</p>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            variant="ghost"
+            className={cn(
+              "w-full h-auto py-12 flex flex-col items-center justify-center gap-3",
+              "border-2 border-dashed border-orange-200 hover:border-orange-400",
+              "bg-orange-50/30 hover:bg-orange-50 transition-all duration-300",
+              "rounded-xl group"
+            )}
+          >
+          <div className="bg-orange-100 p-3 rounded-full group-hover:scale-110 transition-transform duration-300">
+            <PlusCircle className="size-8 text-orange-600" />
           </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-900 font-bold text-lg">
+              Seu carrinho está vazio
+            </span>
+            <span className="text-slate-500 text-sm flex items-center justify-center gap-1">
+              Clique aqui para montar seu <strong className="text-orange-600">Dogão</strong>
+            </span>
+          </div>
+        </Button>
         ) : (
           groupedItems.map(item => (
             <div key={item.groupId} className="flex items-center justify-between p-4 border rounded-md shadow-sm">
@@ -176,17 +197,19 @@ export function ItemsForm({ order }: { order: OrderEntity }) {
         )}
       </div>
 
-      <div className="flex justify-center">
-        <Button 
-            onClick={() => setIsModalOpen(true)} 
-            variant="outline"
-            className="w-full border-dashed border-2 py-6 text-gray-600 hover:text-green-600" 
-            disabled={isLoading}
-        >
-          <PlusCircle className="mr-2 size-5" />
-          {orderItems.length === 0 ? 'Adicionar Dogão' : 'Adicionar outro Dogão'}
-        </Button>
-      </div>
+      {groupedItems.length > 0 && (
+        <div className="flex justify-center">
+          <Button 
+              onClick={() => setIsModalOpen(true)} 
+              className="bg-green-300 w-full border-dashed border-2 py-6 text-gray-600 hover:bg-green-800 hover:text-gray-300" 
+              disabled={isLoading}
+          >
+            <PlusCircle className="mr-2 size-5" />
+            {orderItems.length === 0 ? 'Adicionar Dogão' : 'Adicionar outro Dogão'}
+          </Button>
+        </div>
+      )}
+      
 
       <div className="mt-4 p-4 bg-slate-900 rounded-md text-white shadow-inner">
         <div className="flex justify-between items-center font-bold text-lg">
@@ -202,7 +225,7 @@ export function ItemsForm({ order }: { order: OrderEntity }) {
         onClick={handleProccessItems}
         disabled={orderItems.length === 0 || isLoading}
       >
-        {isLoading ? 'Salvando Itens...' : 'Continuar para Entrega'}
+        {isLoading ? 'Salvando Itens...' : 'Avançar para tipo de pedido'}
       </Button>
 
       <HotDogModal

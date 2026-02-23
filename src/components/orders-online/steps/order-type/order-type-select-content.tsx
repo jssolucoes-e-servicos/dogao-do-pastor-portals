@@ -4,15 +4,17 @@
 import { DeliveryOptionEnum } from "@/common/enums";
 import { ICotentStepOrderType } from "@/common/interfaces";
 import { Fragment } from "react";
+import { OrderStepHeader } from "../../order-step-header";
 import { StepOrderTypeSelect } from "./step-order-type-select";
 
-export function OrderTypeSelectContent({ deliveryOption, setDeliveryOption }: ICotentStepOrderType) {
+export function OrderTypeSelectContent({ deliveryOption, setDeliveryOption, orderId }: ICotentStepOrderType) {
   return (
     <Fragment>
-      <div className="flex flex-col items-center">
-        <h2 className="text-2xl font-bold text-center mb-2">Detalhes de Entrega</h2>
-        <p className="text-gray-600 text-center">Selecione uma opção para o seu pedido.</p>
-      </div>
+      <OrderStepHeader 
+        title="Detalhes do Pedido"
+        subtitle="Selecione uma opção para o seu pedido."
+        orderId={orderId}
+      />
       <div className="flex flex-col sm:flex-row gap-4 justify-center w-full">
         <StepOrderTypeSelect
           type={DeliveryOptionEnum.PICKUP}

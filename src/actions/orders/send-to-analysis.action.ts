@@ -1,10 +1,11 @@
-// src/actions/orders/send-to-analysis.actions.ts
+// src/actions/orders/send-to-analysis.action.ts
 "use server";
 
 import { OrderEntity } from "@/common/entities";
+import { IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
-export const SendToAnalysisAction = async (orderId: string, customerAddressId: string, distance: number): Promise<OrderEntity> => {
+export const SendToAnalysisAction = async (orderId: string, customerAddressId: string, distance: number): Promise<IResponseObject<OrderEntity>> => {
   try {
     const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/send-to-analysis`, {
       method: 'POST',
@@ -14,11 +15,15 @@ export const SendToAnalysisAction = async (orderId: string, customerAddressId: s
         distance
       })
     });
-    return data as OrderEntity;
-  } catch (error: any) {
-      if (error.message === 'NEXT_REDIRECT') throw error;
+    return {
+      success: true,
+      data: data
+    };
+  } catch (error) {
       console.error(`Falha ao enviar pedido ${orderId} para analise: `, error);
-      throw new Error('Falha ao enviar pedido para analise. Tente novamante.')
-      
+      return{
+        success: false,
+        error: error instanceof Error ? error.message : 'Falha ao enviar pedido para analise. Tente novamante.',
+      }
     }
 };

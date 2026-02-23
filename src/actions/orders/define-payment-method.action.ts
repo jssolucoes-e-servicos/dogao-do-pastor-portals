@@ -1,7 +1,9 @@
+// arc/actions/orders/define-payment-method.action.ts
 "use server";
 
 import { OrderEntity } from "@/common/entities";
 import { PaymentMethodEnum } from "@/common/enums";
+import { IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
 interface DefinePaymentMethodProps {
@@ -9,9 +11,9 @@ interface DefinePaymentMethodProps {
   method: PaymentMethodEnum;
 }
 
-export const DefinePaymentMethodAction = async (values: DefinePaymentMethodProps): Promise<OrderEntity> => {
+export const DefinePaymentMethodAction = async (values: DefinePaymentMethodProps): Promise<IResponseObject<OrderEntity>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/define-payment`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/orders/define-payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -21,10 +23,15 @@ export const DefinePaymentMethodAction = async (values: DefinePaymentMethodProps
         method: values.method,
       }),
     });
-
-    return data as OrderEntity;
-  } catch (error: any) {
-    if (error.message === 'NEXT_REDIRECT') throw error;
-    throw new Error('Falha ao definir metodo de pagamento.');
+    return {
+      success: true,
+      data: data
+    };
+  } catch (error) {
+    console.error(`Falha ao definir metodo de pagamento: ${error}`);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Falha ao definir metodo de pagamento",
+    };
   }
 };

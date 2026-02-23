@@ -1,8 +1,8 @@
+// arc/actions/auth/customer-login.action.ts
 "use server";
 
 import { IResponse } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
-import Cookies from "js-cookie";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -13,7 +13,7 @@ interface AuthCustomerLoginActionProps {
 
 export const AuthCustomerLoginAction = async (values: AuthCustomerLoginActionProps): Promise<IResponse> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/auth/customer/login`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/auth/customer/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,12 +47,11 @@ export const AuthCustomerLoginAction = async (values: AuthCustomerLoginActionPro
     });
 
     return { success: true };
-  } catch (error: any) {
-   console.error("Erro no login do colaborador:", error);
-    const errorMessage = error.message || 'Falha ao processar seu acesso.';
+  } catch (error) {
+    console.error("Erro no login do colaborador:", error);
     return {
       success: false,
-      error: errorMessage
+      error: error instanceof Error ? error.message : 'Falha ao processar seu acesso.',
     }
   }
 };

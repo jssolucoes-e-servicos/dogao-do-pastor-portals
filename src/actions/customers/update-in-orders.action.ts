@@ -1,22 +1,29 @@
+// src/actions/customer/update-in-orders.action.ts
 "use server";
 
+import { WhatsappIsValidAction } from "@/actions/whatsapp/is-valid.action";
 import { CustomerEntity } from "@/common/entities";
-import { ICustomerOrderPayload } from "@/common/interfaces";
+import { ICustomerOrderPayload, IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
-import { WhatsappIsValidAction } from "../whatsapp/is-valid.action";
 
-export const UpdateCustomerInOrderAction = async (customerOr: CustomerEntity, loadData: ICustomerOrderPayload): Promise<CustomerEntity | { error: string}> => {
-    const checkWpp = await WhatsappIsValidAction(loadData.phone);
-
+export const UpdateCustomerInOrderAction = async (customerOr: CustomerEntity, loadData: ICustomerOrderPayload): Promise<IResponseObject<CustomerEntity>> => {
+  try {  
+    const {message: checkWpp} = await WhatsappIsValidAction(loadData.phone);
     if (checkWpp === null) { 
-      throw new Error("Ocorreu uma falha ao verificar se seu número é um whatsapp válido.");
+      return {
+        success: false,
+        error: "Ocorreu uma falha ao verificar se seu número é um whatsapp válido.",
+      }
     }
 
-     if (checkWpp === false) {
-      throw new Error("O número informado não possui um WhatsApp ativo. Informe outro");
+    if (checkWpp === 'false') {
+      return {
+        success: false,
+        error: "O número informado não possui um WhatsApp ativo. Informe outro",
+      }
     }
 
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/customers/${customerOr.id}`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/customers/${customerOr.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -29,6 +36,15 @@ export const UpdateCustomerInOrderAction = async (customerOr: CustomerEntity, lo
         allowsChurch: loadData.allowsChurch!, 
       })
     });
-    console.log('customer: ', data);
-    return data as CustomerEntity;
+    return {
+      success: true,
+      data: data,
+    };
+  } catch (error) {
+    console.error(`Falha ao gravar dados do cliente: ${error}`);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Falha ao gravar dados do cliente',
+    }
+  }
 };

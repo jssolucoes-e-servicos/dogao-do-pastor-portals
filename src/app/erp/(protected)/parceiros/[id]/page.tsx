@@ -1,6 +1,6 @@
 import { GetByIdAction } from "@/actions/partners/get-by-id.action";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Building2, Calendar, Heart, MapPin, Phone, User } from "lucide-react";
 import Link from "next/link";
@@ -8,9 +8,10 @@ import { notFound } from "next/navigation";
 
 export default async function PartnerDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const partner = await GetByIdAction(id);
+  const { data: partner } = await GetByIdAction(id);
 
-  if (!partner) notFound();
+  if (!partner)
+      return notFound();
 
   return (
     <div className="flex flex-col gap-6">

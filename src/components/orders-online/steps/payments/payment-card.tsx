@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangePaymentMethodAction } from "@/actions/orders/change-payment-method.action";
+import { GenerateOrderCardAction } from "@/actions/payments/generate-order-card.action";
 import { OrderEntity } from "@/common/entities";
 import { NumbersHelper } from "@/common/helpers/numbers-helper";
 import { Button } from "@/components/ui/button";
@@ -36,35 +37,25 @@ export function PaymentCard({ order }: PaymentCardProps) {
     try {
       setIsLoading(true);
       setTextLoading('Processando pagamento');
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payments/${order.id}/card`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            card: {
-              token,
-              installments,
-            },
-            payer: {
-              firstName: order.customerName,
-              phone: order.customerPhone,
-              email: order.customer.email || undefined,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok){ throw new Error("Erro ao processar pagamento");}else{
-        toast.success("Pagamento processado com sucesso!");
-        router.push(`/comprar/${order.id}/obrigado`);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Não foi possível processar o pagamento.");
-    } finally {
+    
+      await GenerateOrderCardAction({
+        orderId: order.id,
+        token: token,
+        installments: installments,
+        payer: {
+          name: order.customerName,
+          email: order.customer.email || undefined,
+        },
+      })
       setIsLoading(false);
+      toast.success("Pagamento processado com sucesso!");
+      router.push(`/comprar/${order.id}/obrigado`);
+    } catch (error) {
+      setIsLoading(false);
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : 'Falha ao processar pagamento'
+      );
     }
   };
 
@@ -75,9 +66,9 @@ export function PaymentCard({ order }: PaymentCardProps) {
         await ChangePaymentMethodAction(order.id);
         setIsLoading(false);
         router.push(`/comprar/${order.id}/pagamento`);
-      } catch (error: any ) {
+      } catch (error) {
         setIsLoading(false);
-        toast.error(error.message);
+        toast.error(error instanceof Error ? error.message : 'Falha ao processar troca de pagamento');
       }
     }
 

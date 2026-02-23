@@ -20,7 +20,7 @@ const STEP_ROUTES: Record<string, string> = {
 };
 
 export async function StepsRouter({orderId, page}: StepsRouterProps): Promise<OrderEntity> {
-  const order = await findOrdersByIdAction(orderId) ;
+  const {data: order} = await findOrdersByIdAction(orderId) ;
 
   if (!order) {  
     console.log('order: ',order); 

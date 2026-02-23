@@ -15,7 +15,7 @@ export default async function PerfilPage() {
     redirect('/portal-parceiro/acesso');
   }
 
-  const partner = await GetByIdAction(session.user.id);
+  const {data: partner} = await GetByIdAction(session.user.id);
 
   if (!partner) {
     return (

@@ -1,6 +1,26 @@
 import { FetchCtx } from "@/common/enums";
 import Cookies from "js-cookie";
 
+const getCookiePrefix = (ctx: FetchCtx): string => {
+  const data: Partial<Record<FetchCtx, string>> = {
+    [FetchCtx.CUSTOMER]: 'ddp-ctm-00',
+    [FetchCtx.PARTNER]: 'ddp-prt-00',
+    [FetchCtx.ERP]: 'ddp-ctb-00',
+    [FetchCtx.PUBLIC]: 'error',
+  };
+  return data[ctx]!;
+}
+
+const getLoginRoute = (ctx: FetchCtx): string => {
+  const data: Partial<Record<FetchCtx, string>> = {
+    [FetchCtx.CUSTOMER]: '/portal-cliente/acesso',
+    [FetchCtx.PARTNER]: '/portal-parceiro/acesso',
+    [FetchCtx.ERP]: '/erp/acesso',
+    [FetchCtx.PUBLIC]: '',
+  };
+  return data[ctx]!;
+}
+
 /**
  * Utilitário para chamadas à API com contexto obrigatório.
  */
@@ -11,10 +31,8 @@ async function fetchApi(
 ) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/v1';
   const isServer = typeof window === "undefined";
-  
-  const cookiePrefix = ctx === FetchCtx.PARTNER ? 'ddp-prt-00' : 'ddp-ctm-00';
-  const loginRoute = ctx === FetchCtx.PARTNER ? '/portal-parceiro/acesso' : '/portal-cliente/acesso';
-
+  const cookiePrefix = getCookiePrefix(ctx);
+  const loginRoute = getLoginRoute(ctx);
   let token: string | undefined = "";
 
   // 1. RECUPERAÇÃO DO TOKEN (Safe Server/Client)

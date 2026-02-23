@@ -1,16 +1,24 @@
+// src/actions/partners/get-by-id.action.ts
 "use server";
 
 import { PartnerEntity } from "@/common/entities";
+import { IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
-export const GetByIdAction = async (id: string): Promise<PartnerEntity> => {
+export const GetByIdAction = async (id: string): Promise<IResponseObject<PartnerEntity>> => {
   try {
-    const partners = await fetchApi(FetchCtx.CUSTOMER, `/partners/find/${id}`, {
+    const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/find/${id}`, {
       cache: "no-store"
     })
-    return partners as PartnerEntity;
+    return {
+      success: true,
+      data: data
+    };
   } catch (error) {
-    console.error(error);
-    throw new Error('Falha ao listar parceiros');
+    console.error(`Falha ao recuperar parceiro: ${error}`);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Falha ao recuperaar dados do parceiro",
+    };
   }
 };

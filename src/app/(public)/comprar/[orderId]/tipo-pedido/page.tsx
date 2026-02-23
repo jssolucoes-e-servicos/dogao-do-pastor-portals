@@ -17,7 +17,7 @@ export default async function Page({ params }: PageProps) {
     page: SiteOrderStepEnum.DELIVERY}); 
 
   let addresses: CustomerAddressEntity[] = [];
-  const addressesFind = await findAddressAction(order.customerId);
+  const {data: addressesFind} = await findAddressAction(order.customerId);
   if (addressesFind) { addresses = addressesFind}
 
   return (

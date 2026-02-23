@@ -14,7 +14,7 @@ export default async function EditPartnerPage({ params }: EditPartnerPageProps) 
   const { id } = await params;
   
   // Busca os dados do parceiro no servidor
-  const partner = await GetByIdAction(id);
+  const {data: partner} = await GetByIdAction(id);
 
   // Se o parceiro não existir ou se tentarem editar um convite que ainda não virou parceiro real 
   // (caso você queira restringir ainda mais via servidor)

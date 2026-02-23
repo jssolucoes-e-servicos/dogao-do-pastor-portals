@@ -14,7 +14,7 @@ interface AuthContributorLoginActionProps {
 export const AuthContributorLoginAction = async (values: AuthContributorLoginActionProps): 
 Promise<IResponse> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/auth/contributor/login`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/auth/contributor/login`, {
       method: 'POST',
       body: JSON.stringify({
         username: values.username, 
@@ -46,9 +46,11 @@ Promise<IResponse> => {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro no login do colaborador:", error);
-    const errorMessage = error.message || 'Falha ao processar seu acesso.';
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : "Falha ao listar parceiros";
     return {
       success: false,
       error: errorMessage

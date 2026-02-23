@@ -10,9 +10,9 @@ interface CadastroPageProps {
 
 export default async function CadastroParceiroPage({ params }: CadastroPageProps) {
   const { id } = await params;
-  const check = await VerifyLinkAction(id);
+  const {data: check} = await VerifyLinkAction(id);
 
-  if (!check.valid) {
+  if (!check?.valid) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
         <Card className="max-w-md w-full border-red-100 shadow-2xl">
@@ -26,7 +26,7 @@ export default async function CadastroParceiroPage({ params }: CadastroPageProps
           </CardHeader>
           <CardContent className="text-center space-y-6 pb-10">
             <p className="text-slate-500 font-medium">
-              {check.message || "Este link de ativação expirou ou já foi utilizado para configurar uma conta."}
+              {check?.message || "Este link de ativação expirou ou já foi utilizado para configurar uma conta."}
             </p>
             <div className="pt-4">
               <Link

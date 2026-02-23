@@ -47,10 +47,10 @@ export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerMo
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const newPartner = await GenerateInviteAction();
-      const url = `${window.location.origin}/parceiros/cadastro/${newPartner.id}`;
+      const {data: newPartner} = await GenerateInviteAction();
+      const url = `${window.location.origin}/parceiros/cadastro/${newPartner?.id}`;
       setInviteUrl(url);
-      setPartnerCreated(newPartner);
+      setPartnerCreated(newPartner!);
       
       // Notifica o SWR que a lista de parceiros mudou
       mutate("partners-list"); 

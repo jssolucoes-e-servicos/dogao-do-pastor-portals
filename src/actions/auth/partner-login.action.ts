@@ -1,8 +1,8 @@
+// arc/actions/auth/partner-login.action.ts
 "use server";
 
 import { IResponse } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
-import Cookies from "js-cookie";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -14,7 +14,7 @@ interface AuthPartnerLoginActionProps {
 export const AuthPartnerLoginAction = async (values: AuthPartnerLoginActionProps): 
 Promise<IResponse> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/auth/partners/login`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/auth/partners/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,12 +48,11 @@ Promise<IResponse> => {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Erro no login do parceiro:", error);
-    const errorMessage = error.message || 'Falha ao processar seu acesso.';
     return {
       success: false,
-      error: errorMessage
+      error: error instanceof Error ? error.message : 'Falha ao processar seu acesso.'
     }
   }
 };

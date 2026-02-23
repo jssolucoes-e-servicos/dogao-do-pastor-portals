@@ -27,7 +27,7 @@ export function UserNav() {
       try {
         setUser(JSON.parse(userData));
       } catch (e) {
-        console.error("Erro ao ler dados do usuário");
+        console.error("Erro ao ler dados do usuário: ", e);
       }
     }
   }, []);

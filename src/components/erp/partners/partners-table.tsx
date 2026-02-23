@@ -1,7 +1,9 @@
+// src/components/erp/partners/partners-table/index.tsx
 "use client"
 
 import { ListPartnersAllAction } from "@/actions/partners/list-partners-all.action";
 import { PartnerEntity } from "@/common/entities";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Certifique-se de ter instalado o componente
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,24 +18,26 @@ interface Props {
 }
 
 export function PartnersTable({ initialData }: Props) {
-  const { data: partners, error, isLoading } = useSWR<PartnerEntity[]>(
-    `partners-list`,
-    () => ListPartnersAllAction()
-  );
+  const { data: response, isLoading } = useSWR(`partners-list`, () => ListPartnersAllAction(), {
+    fallbackData: { success: true, data: initialData },
+    revalidateOnFocus: true
+  });
 
-  const displayData = partners || initialData;
+  const displayData = response?.data || initialData;
+  const fetchError = response?.success === false ? response.error : null;
 
   return (
     <div className="rounded-md border relative">
       {isLoading && (
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 z-10">
           <Loader2 className="h-4 w-4 animate-spin text-orange-500 opacity-50" />
         </div>
       )}
 
-      {error && (
-        <div className="absolute top-2 right-2">
-          Erro ao carregar os dados: {error.message}
+      {fetchError && (
+        <div className="p-4 text-xs text-red-600 bg-red-50 border-b flex items-center gap-2">
+          <AlertCircle className="h-3 w-3" />
+          Erro ao atualizar dados: {fetchError}
         </div>
       )}
 
@@ -59,35 +63,46 @@ export function PartnersTable({ initialData }: Props) {
             </TableRow>
           ) : (
             displayData.map((partner) => {
-              // Verifica se é apenas um convite (não preenchido pelo parceiro)
               const isInviteOnly = partner.name?.includes("Parceiro temporário") || !partner.responsibleName;
-              // Verifica se o parceiro já completou o cadastro (bloqueia delete)
               const hasCompletedRegistration = !!partner.responsibleName && !partner.name?.includes("Parceiro temporário");
+              const initials = partner.name
+                ? partner.name.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().substring(0, 2)
+                : "??";
 
               return (
                 <TableRow key={partner.id} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="py-4">
-                    <div className="flex flex-col">
-                      <span className={cn(
-                        "font-bold text-sm",
-                        isInviteOnly ? "text-orange-600/70 italic" : "text-foreground"
-                      )}>
-                        {partner.name}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground uppercase font-medium">
-                        CNPJ: {partner.cnpj}
-                      </span>
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-3">
+
+                      <Avatar className="h-9 w-9 border border-orange-100 shadow-sm">
+                        <AvatarImage src={partner.logo} alt={partner.name} className="object-cover" />
+                        <AvatarFallback className="bg-orange-600 text-white font-bold text-[10px]">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex flex-col">
+                        <span className={cn(
+                          "font-bold text-sm leading-tight",
+                          isInviteOnly ? "text-orange-600/70 italic" : "text-foreground"
+                        )}>
+                          {partner.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-medium">
+                          CNPJ: {partner.cnpj}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     {partner.responsibleName ? (
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{partner.responsibleName}</span>
-                        <span className="text-xs text-muted-foreground">{partner.phone}</span>
+                        <span className="text-[10px] text-muted-foreground">{partner.responsiblePhone || partner.phone}</span>
                       </div>
                     ) : (
-                      <span className="text-[11px] text-slate-400 italic bg-slate-100 px-2 py-0.5 rounded">
+                      <span className="text-[10px] text-slate-400 italic bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                         Link enviado...
                       </span>
                     )}
@@ -97,8 +112,8 @@ export function PartnersTable({ initialData }: Props) {
                     <Badge 
                       variant={partner.active ? "default" : "secondary"}
                       className={cn(
-                        "font-semibold",
-                        partner.active ? "bg-green-100 text-green-700 hover:bg-green-100" : ""
+                        "font-semibold text-[10px] uppercase",
+                        partner.active ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200" : ""
                       )}
                     >
                       {partner.active ? "Ativo" : "Inativo"}
@@ -108,11 +123,11 @@ export function PartnersTable({ initialData }: Props) {
                   <TableCell className="text-center">
                     <div className="flex flex-col items-center gap-1">
                       {partner.approved ? (
-                        <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1">
+                        <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1 text-[10px] uppercase">
                           <CheckCircle2 size={12} /> Aprovado
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="border-orange-500 text-orange-600 gap-1 animate-pulse">
+                        <Badge variant="outline" className="border-orange-500 text-orange-600 gap-1 animate-pulse text-[10px] uppercase">
                           <Clock size={12} /> Pendente
                         </Badge>
                       )}
@@ -121,31 +136,28 @@ export function PartnersTable({ initialData }: Props) {
 
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      {/* Sempre mostramos o botão de reenvio para pendentes */}
                       {!partner.approved && (
                         <InvitePartnerModal partner={partner} mode="resend" />
                       )}
 
-                      {/* Visualizar e Editar: Apenas se não for convite pendente */}
                       {!isInviteOnly && (
                         <>
-                          <Button variant="ghost" size="icon" title="Visualizar" asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Visualizar" asChild>
                             <Link href={`/erp/parceiros/${partner.id}`}>
                               <Eye className="h-4 w-4 text-blue-600" />
                             </Link>
                           </Button>
-                          
-                          <Button variant="ghost" size="icon" title="Editar" asChild>
-                            <Link href={`/erp/parceiros/${partner.id}/editar`}>
+
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar" asChild>
+                            <Link href={`/erp/partners/${partner.id}/editar`}>
                               <Edit className="h-4 w-4 text-slate-600" />
                             </Link>
                           </Button>
                         </>
                       )}
 
-                      {/* Excluir: Apenas para registros que NUNCA completaram o cadastro */}
                       {!hasCompletedRegistration && (
-                        <Button variant="ghost" size="icon" title="Excluir Convite" className="hover:bg-red-50">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50" title="Excluir Convite">
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       )}

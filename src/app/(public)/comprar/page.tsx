@@ -13,7 +13,7 @@ export default async function PreVenda({ searchParams }: PreVendaProps) {
 
   return (
     <Fragment>
-      < OrderOnlineInitialStep sellerTag={sellerSlug} />
+      <OrderOnlineInitialStep sellerTag={sellerSlug} />
     </Fragment>
   );
 }

@@ -1,3 +1,4 @@
+// src/actions/editions/get-active.action.ts
 "use server";
 
 import { IEditionResponse } from "@/common/interfaces/edition-response.interface";

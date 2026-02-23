@@ -24,10 +24,9 @@ export function OrderOnlineInitialStep({ sellerTag }: { sellerTag: string }) {
     }
 
     try {
-      const data = await OrdersSaleInitAction(cpfNumbersOnly, sellerTag)
-      console.log('order: ', data);
+      const { data } = await OrdersSaleInitAction(cpfNumbersOnly, sellerTag)
       setIsLoading(false);
-      router.replace(`/comprar/${data.order.id}`);
+      router.replace(`/comprar/${data?.order.id}`);
     } catch (error: any) {
       setIsLoading(false);
       console.error('Erro na requisição:', error);

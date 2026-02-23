@@ -25,11 +25,13 @@ export function PaymentPix({ order }: { order: OrderEntity }) {
     setIsLoading(true);
     setTextLoading('Gerando QrCode');
     try {
-      const pixData = await GenerateOrderPixAction(order.id);
-      setPixData({
-        qrCodeBase64: pixData.pixQrcode || '',
-        copyPaste: pixData.pixCopyPaste || '',
-      });
+      const response = await GenerateOrderPixAction(order.id);
+      if (response.data) {
+        setPixData({
+          qrCodeBase64: response.data.pixQrcode || '',
+          copyPaste: response.data.pixCopyPaste || '',
+        })
+      } 
       setIsLoading(false);
     } catch (error: any) {
       setIsLoading(false);

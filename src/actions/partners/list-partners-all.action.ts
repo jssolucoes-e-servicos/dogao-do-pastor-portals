@@ -1,20 +1,25 @@
-// src/actions/partners/list-partners-admin.actions.ts
+// src/actions/partners/list-partners-all.action.ts
 "use server";
 
 import { PartnerEntity } from "@/common/entities";
+import { IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
-export const ListPartnersAllAction = async (): Promise<PartnerEntity[]> => {
+export const ListPartnersAllAction = async (): Promise<IResponseObject<PartnerEntity[]>> => {
   try {
-    // Note que usamos uma rota diferente, focada em administração
     const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/all`, {
       method: 'GET',
       cache: "no-store"
-      //next: { revalidate: 0 } // Garante dados sempre frescos no ERP
     });
-    return data as PartnerEntity[];
-  } catch (error: any) {
-    console.error("Falha ao buscar lista administrativa de parceiros:", error);
-    return [];
+    return {
+      success: true,
+      data: data,
+    };
+  } catch (error) {
+    console.error(`Falha ao buscar lista administrativa de parceiros: ${error}`);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Falha ao listar parceiros",
+    };
   }
 };

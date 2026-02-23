@@ -7,10 +7,17 @@ import { ChevronRight, LayoutDashboard, Users } from "lucide-react"
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
   {
+    title: "Clientes",
+    icon: Users,
+    items: [
+      { title: "Listagem", url: "/erp/clientes" },
+    ],
+  },
+  {
     title: "Entidades Parceiras",
     icon: Users,
     items: [
-      { title: "Cadastros", url: "/erp/parceiros" },
+      { title: "Listagem", url: "/erp/parceiros" },
     ],
   }
   /* {

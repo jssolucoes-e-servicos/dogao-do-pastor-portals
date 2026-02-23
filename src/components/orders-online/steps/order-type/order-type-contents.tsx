@@ -6,16 +6,17 @@ import { SendToAnalysisAction } from '@/actions/orders/send-to-analysis.action';
 import { SetOrderDeliveryAction } from '@/actions/orders/set-order-delivery.action';
 import { SetOrderDonateAction } from '@/actions/orders/set-order-donate.action';
 import { SetOrderPickupAction } from '@/actions/orders/set-order-pickup.action';
-import { ListPartnersAction } from '@/actions/partners/list-partners.action';
+import { ListPartnersForOrdersAction } from '@/actions/partners/list-partners-for-orders.action';
 import { Company } from '@/common/configs/company';
-import { CustomerAddressEntity, OrderEntity, PartnerEntity } from "@/common/entities";
+import { CustomerAddressEntity, OrderEntity } from "@/common/entities";
 import { DeliveryOptionEnum } from '@/common/enums';
 import { DeliveryDistanceLimitModal } from "@/components/modals/delivery-distance-limit-modal";
 import { Button } from "@/components/ui/button";
 import { getDistanceBetween } from "@/lib/get-distance-between";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import useSWR from 'swr';
 import { OrderTypeSelectContent } from "./order-type-select-content";
 import { TypeDelivery } from "./type-delivery";
 import { TypeDonate } from "./type-donate";
@@ -28,7 +29,7 @@ interface Props {
 
 export function OrderTypeContents({ order, addresses = [] }: Props) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAction, setIsLoadingAction] = useState(false);
   const [deliveryOption, setDeliveryOption] = useState<DeliveryOptionEnum>(DeliveryOptionEnum.PICKUP);
   
   // Entrega
@@ -39,26 +40,31 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
   
   // Doação
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>('IVC_INTERNAL');
-  const [partners, setPartners] = useState<PartnerEntity[]>([]);
+  const [suggestionText, setSuggestionText] = useState<string | undefined>(undefined);
+
+  // Busca parceiros usando SWR para cache e revalidação automática
+  const { data: partnersResponse, isLoading: isLoadingPartners } = useSWR(
+    'partners-for-orders',
+    () => ListPartnersForOrdersAction(),
+    {
+      revalidateOnFocus: false, // Evita disparar busca apenas ao trocar de aba, mas mantém cache
+      dedupingInterval: 60000, // Considera o cache "fresco" por 1 minuto
+    }
+  );
+
+  const partners = partnersResponse?.data || [];
 
   // Modal de Limite
   const [showLimitModal, setShowLimitModal] = useState(false);
 
-  // Busca parceiros ao montar o componente
-  useEffect(() => {
-    async function loadPartners() {
-      try {
-        const data = await ListPartnersAction();
-        setPartners(data || []);
-      } catch (error) {
-        console.error("Erro ao carregar parceiros:", error);
-      }
-    }
-    loadPartners();
-  }, []);
+  // Função para lidar com a seleção do parceiro ou sugestão
+  const handlePartnerSelect = (id: string, suggestion?: string) => {
+    setSelectedPartnerId(id);
+    setSuggestionText(suggestion); 
+  };
 
   const handleFinalizeAndPay = async () => {
-    setIsLoading(true);
+    setIsLoadingAction(true);
     try {
       if (deliveryOption === DeliveryOptionEnum.PICKUP) {
         await SetOrderPickupAction(order.id);
@@ -67,7 +73,10 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
       
       else if (deliveryOption === DeliveryOptionEnum.DONATE) {
         if (!selectedPartnerId) throw new Error("Selecione uma instituição.");
-        await SetOrderDonateAction(order.id, selectedPartnerId);
+        
+        // Passamos o ID do parceiro e o texto da sugestão (que vai para as observações)
+        await SetOrderDonateAction(order.id, selectedPartnerId, suggestionText);
+        
         router.push(`/comprar/${order.id}/pagamento`);
       } 
       
@@ -76,9 +85,9 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
 
         if (showNewAddressForm || !finalAddressId) {
           if (!addressData.street || !addressData.number) throw new Error("Preencha o endereço completo.");
-          const newAddr = await createAddressAction({ ...addressData, customerId: order.customerId });
-          finalAddressId = newAddr.id;
-          setAddressSelectedId(newAddr.id);
+          const response = await createAddressAction({ ...addressData, customerId: order.customerId });
+          finalAddressId = response.data ? response.data.id : addressSelectedId;
+          setAddressSelectedId(finalAddressId);
         }
 
         const fullAddress = `${addressData.street}, ${addressData.number}, ${addressData.neighborhood}`;
@@ -87,7 +96,7 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
 
         if (distance && distance > 5) {
           setShowLimitModal(true);
-          setIsLoading(false);
+          setIsLoadingAction(false);
           return;
         }
 
@@ -97,32 +106,36 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
     } catch (error: any) {
       toast.error(error.message || "Falha ao processar pedido.");
     } finally {
-      setIsLoading(false);
+      setIsLoadingAction(false);
     }
   };
 
   const onSendToReview = async () => {
     try {
-      setIsLoading(true);
+      setIsLoadingAction(true);
       if (!addressSelectedId || distanceKm === null) throw new Error("Dados incompletos.");
       await SendToAnalysisAction(order.id, addressSelectedId, distanceKm);
       router.push(`/comprar/${order.id}/analise`);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
-      setIsLoading(false);
+      setIsLoadingAction(false);
     }
   };
 
   return (
     <div className="flex flex-col gap-6 p-4 rounded-lg bg-white shadow-lg w-full">
-      <OrderTypeSelectContent deliveryOption={deliveryOption} setDeliveryOption={setDeliveryOption} />
+      <OrderTypeSelectContent 
+        orderId={order.id} 
+        deliveryOption={deliveryOption} 
+        setDeliveryOption={setDeliveryOption} 
+      />
 
       {deliveryOption === DeliveryOptionEnum.PICKUP && <TypePickup />}
       
       {deliveryOption === DeliveryOptionEnum.DONATE && (
         <TypeDonate 
-          onSelect={setSelectedPartnerId} 
+          onSelect={handlePartnerSelect} 
           selectedId={selectedPartnerId} 
           partners={partners}
         />
@@ -152,10 +165,14 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
       <div className="flex justify-center mt-6">
         <Button 
           onClick={handleFinalizeAndPay} 
-          disabled={isLoading} 
-          className="w-full bg-orange-600 hover:bg-orange-700 h-12 font-bold uppercase tracking-wide"
+          disabled={isLoadingAction || (deliveryOption === DeliveryOptionEnum.DONATE && isLoadingPartners)} 
+          className="w-full bg-orange-600 hover:bg-orange-700 h-12 font-bold uppercase tracking-wide gap-2"
         >
-          {isLoading ? 'Processando...' : 'Ir para Pagamento'}
+          {isLoadingAction ? (
+            'Processando...'
+          ) : (
+            'Ir para Pagamento'
+          )}
         </Button>
       </div>
     </div>

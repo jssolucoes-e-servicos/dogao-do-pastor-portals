@@ -3,5 +3,7 @@
  */
 export enum FetchCtx {
   PARTNER = 'prt',
-  CUSTOMER = 'ctm'
+  CUSTOMER = 'ctm',
+  ERP = 'ctb',
+  PUBLIC = 'public',
 }

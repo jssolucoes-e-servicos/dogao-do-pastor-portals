@@ -22,9 +22,9 @@ export default function DoacoesPage() {
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalRecord | null>(null);
   
   const [stats, setStats] = useState({
-    totalRecebido: 0,
+    totalRecebido: 100,
     jaRetirados: 0,
-    disponiveis: 0
+    disponiveis: 100
   });
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
@@ -84,7 +84,7 @@ export default function DoacoesPage() {
 
       {/* Cards de Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-         <Card className="bg-white border-none shadow-sm">
+        <Card className="bg-white border-none shadow-sm">
           <CardHeader className="pb-2 text-center">
             <CardDescription className="uppercase font-bold text-[10px] tracking-widest">Total Recebido</CardDescription>
             <CardTitle className="text-3xl font-black">{stats.totalRecebido}</CardTitle>
@@ -111,25 +111,25 @@ export default function DoacoesPage() {
 
         {withdrawals.length === 0 ? (
           <div className="bg-white rounded-2xl border border-dashed p-12 text-center space-y-3">
-             <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                <Clock className="w-8 h-8" />
-             </div>
-             <p className="text-slate-500 font-medium italic">Nenhum agendamento ativo.</p>
+            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-slate-300">
+              <Clock className="w-8 h-8" />
+            </div>
+            <p className="text-slate-500 font-medium italic">Nenhum agendamento ativo.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {withdrawals.map((w) => (
               <Card key={w.id} className="overflow-hidden border-l-4 border-l-orange-500 shadow-sm flex flex-col">
                 <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
-                   <div className="flex items-center gap-2 text-orange-700 font-bold">
-                      <Clock className="w-4 h-4" /> {w.time}
-                   </div>
-                   <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
-                      #{w.id}
-                   </span>
+                  <div className="flex items-center gap-2 text-orange-700 font-bold">
+                    <Clock className="w-4 h-4" /> {w.time}
+                  </div>
+                  <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
+                    #{w.id}
+                  </span>
                 </div>
                 <CardContent className="p-4 space-y-4 flex-1">
-                   <div className="flex items-center gap-3 border-b pb-3">
+                  <div className="flex items-center gap-3 border-b pb-3">
                       <div className="bg-orange-100 p-2 rounded-lg text-orange-600">
                         <Dog className="w-6 h-6" />
                       </div>
@@ -137,29 +137,29 @@ export default function DoacoesPage() {
                         <p className="text-sm text-slate-500 leading-none">Total de dogs</p>
                         <p className="text-2xl font-black text-slate-800">{w.total}</p>
                       </div>
-                   </div>
-                   
-                   <div className="space-y-2">
+                  </div>
+
+                  <div className="space-y-2">
                       {w.details.map((detail, idx) => (
                         <div key={idx} className="flex justify-between text-xs items-start gap-4">
-                           <span className="text-slate-600 font-medium leading-tight">• {detail.label}</span>
-                           <span className="font-black text-slate-800 whitespace-nowrap">{detail.quantity} un</span>
+                          <span className="text-slate-600 font-medium leading-tight">• {detail.label}</span>
+                          <span className="font-black text-slate-800 whitespace-nowrap">{detail.quantity} un</span>
                         </div>
                       ))}
-                   </div>
+                  </div>
                 </CardContent>
                 <div className="p-3 bg-slate-50/50 border-t grid grid-cols-2 gap-2">
-                   <Button 
+                  <Button 
                     variant="outline" 
                     size="sm" 
                     className="text-[10px] font-bold uppercase tracking-widest gap-2"
                     onClick={() => openReceipt(w)}
-                   >
-                      <QrCode className="w-3 h-3" /> Comprovante
-                   </Button>
-                   <Button variant="ghost" size="sm" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-red-600">
-                      Cancelar
-                   </Button>
+                  >
+                    <QrCode className="w-3 h-3" /> Comprovante
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-red-600">
+                    Cancelar
+                  </Button>
                 </div>
               </Card>
             ))}

@@ -8,7 +8,7 @@ import Image from "next/image";
 const VERSION = '1.1.14b';
 
 export const metadata: Metadata = {
-  title: "Dogão do Pastor | Gestão",
+  title: "Dogão do Pastor",
   description: "Sistema de gestão desenvolvido por JS Soluções e Serviços",
 };
 
@@ -19,24 +19,19 @@ export default async function RootLayout({
 }>) {
   const response = await getActiveEdition();
   const edition = response?.edition;
-
   const now = new Date();
-
   const isSaleOpen = 
     edition && 
     edition.active && 
     now >= new Date(edition.autoEnableDate) && 
     now <= new Date(edition.autoDisableDate);
-
   const hasStock = edition ? edition.dogsSold < edition.limitSale : false;
-
   const canSell = isSaleOpen && hasStock;
 
   return (
     <html lang="pt-br" suppressHydrationWarning>
       <body className="antialiased">
         <main className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:p-24 bg-gray-50">
-          
           <header className="z-10 w-full max-w-5xl items-center justify-center font-mono text-sm lg:flex mb-8">
             <Image
               src="/assets/images/dogao-do-pastor.svg"
@@ -50,25 +45,18 @@ export default async function RootLayout({
           <div className="relative flex place-items-center flex-col w-full">
             {canSell ? (
               <>
-                {/* <div className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-xs font-bold uppercase mb-4 animate-pulse">
-                  Vendas Abertas
-                </div> */}
                 <h2 className="text-1xl font-black text-center mb-1 uppercase tracking-tighter text-slate-900">
                   Edição: {edition.name}
                 </h2>
                 <p className="text-center text-gray-600 mb-8 font-small italic">
                   Valor unitário: {NumbersHelper.formatCurrency(edition.dogPrice)}
                 </p>
-                
                 <div className="w-full max-w-2xl px-4">
                   {children}
                 </div>
               </>
             ) : (
               <div className="text-center space-y-4 py-12">
-               {/*  <div className="bg-orange-100 text-orange-700 px-6 py-2 rounded-full text-sm font-bold uppercase inline-block mb-4">
-                  {edition && now < new Date(edition.autoEnableDate) ? 'Em breve' : 'Vendas Encerradas'}
-                </div> */}
                 <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">
                   {edition && now < new Date(edition.autoEnableDate) 
                     ? 'Aguarde o início das vendas!' 
