@@ -1,26 +1,49 @@
 // src/components/erp/layout/erp-sidebar.tsx
 "use client"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/ui/sidebar"
-import { ChevronRight, LayoutDashboard, Users } from "lucide-react"
-import { useEffect } from "react"
+
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import {
+  Building2,
+  ChevronRight,
+  LayoutDashboard,
+  Users,
+  UsersRound
+} from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
+  { title: "Clientes", icon: Users, url: "/erp/clientes" },
+  { title: "Entidades Parceiras", icon: Building2, url: "/erp/parceiros" },
+
   {
-    title: "Clientes",
-    icon: Users,
+    title: "Cadastros Auxiliares",
+    icon: UsersRound,
     items: [
-      { title: "Listagem", url: "/erp/clientes" },
+      { title: "Vendedores", url: "/erp/vendedores" },
+      { title: "Células", url: "/erp/celulas" },
+      { title: "Redes de Células", url: "/erp/redes-de-celulas" },
     ],
   },
-  {
-    title: "Entidades Parceiras",
-    icon: Users,
-    items: [
-      { title: "Listagem", url: "/erp/parceiros" },
-    ],
-  }
   /* {
     title: "Vendas",
     icon: ShoppingCart,
@@ -29,7 +52,7 @@ const menuItems = [
       { title: "Relatórios", url: "/erp/sales-reports" },
     ],
   }, */
- /*  {
+  /* {
     title: "Cadastros",
     icon: Store,
     items: [
@@ -37,20 +60,37 @@ const menuItems = [
       { title: "Produtos", url: "/erp/products" },
     ],
   }, */
-  /* { title: "Clientes", icon: Users, url: "/erp/customers" }, */
   /* { title: "Configurações", icon: Settings, url: "/erp/settings" }, */
 ]
 
-
-
 export function ErpSidebar() {
-
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   return (
     <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader className="h-16 flex items-center justify-center border-b">
-        <span className="font-black text-orange-600">DOGÃO ERP</span>
+      <SidebarHeader className="h-16 flex items-center justify-center border-b transition-all duration-300">
+        <Link
+          href="/erp"
+          className="flex items-center gap-3 font-bold transition-all"
+        >
+          <Image
+            src="/assets/images/dogao-do-pastor-nome.svg"
+            alt="Dogão do Pastor Logo"
+            width={isCollapsed ? 32 : 40}
+            height={isCollapsed ? 32 : 40}
+            className="shrink-0 transition-all duration-300"
+            priority
+          />
+
+          {!isCollapsed && (
+            <span className="tracking-tighter uppercase font-black text-orange-600 whitespace-nowrap animate-in fade-in duration-500">
+              SISTEMA ERP
+            </span>
+          )}
+        </Link>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Administração</SidebarGroupLabel>
@@ -71,7 +111,7 @@ export function ErpSidebar() {
                         {item.items.map((sub) => (
                           <SidebarMenuSubItem key={sub.title}>
                             <SidebarMenuSubButton asChild>
-                              <a href={sub.url}>{sub.title}</a>
+                              <Link href={sub.url}>{sub.title}</Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
@@ -80,10 +120,10 @@ export function ErpSidebar() {
                   </Collapsible>
                 ) : (
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url}>
+                    <Link href={item.url!}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 )}
               </SidebarMenuItem>

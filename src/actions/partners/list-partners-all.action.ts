@@ -2,12 +2,12 @@
 "use server";
 
 import { PartnerEntity } from "@/common/entities";
-import { IResponseObject } from "@/common/interfaces";
+import { IPaginatedData, IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
-export const ListPartnersAllAction = async (): Promise<IResponseObject<PartnerEntity[]>> => {
+export const ListPartnersAllAction = async (page = 1): Promise<IResponseObject<IPaginatedData<PartnerEntity>>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/all`, {
+    const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/all?page=${page}`, {
       method: 'GET',
       cache: "no-store"
     });

@@ -1,7 +1,7 @@
 // src/app/erp/(protected)/partners/page.tsx
 import { ListPartnersAllAction } from "@/actions/partners/list-partners-all.action";
 import { InvitePartnerModal } from "@/components/erp/partners/invite-partner-modal";
-import { PartnersTable } from "@/components/erp/partners/partners-table";
+import { PartnersTable } from "@/components/erp/tables/partners-table";
 import { Suspense } from "react";
 
 export const dynamic = 'force-dynamic'

@@ -8,38 +8,44 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Clock, Edit, Eye, Loader2, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, Clock, Edit, Eye, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import useSWR from "swr";
-import { InvitePartnerModal } from "./invite-partner-modal";
+import { InvitePartnerModal } from "../partners/invite-partner-modal";
+import { useState } from "react";
 
 interface Props {
   initialData: PartnerEntity[];
 }
 
 export function PartnersTable({ initialData }: Props) {
+    const [page, setPage] = useState<number>(1);
+
   const { data: response, isLoading } = useSWR(`partners-list`, () => ListPartnersAllAction(), {
     fallbackData: { success: true, data: initialData },
+    keepPreviousData: true,
     revalidateOnFocus: true
   });
 
-  const displayData = response?.data || initialData;
+  const displayData = response?.data?.data || [];
+  const meta = response?.data?.meta;
   const fetchError = response?.success === false ? response.error : null;
-
+  
   return (
-    <div className="rounded-md border relative">
-      {isLoading && (
-        <div className="absolute top-2 right-2 z-10">
-          <Loader2 className="h-4 w-4 animate-spin text-orange-500 opacity-50" />
-        </div>
-      )}
+    <div className="flex flex-col gap-4">
+      <div className="rounded-md border relative bg-card shadow-sm">
+        {isLoading && (
+          <div className="absolute top-2 right-2 z-10">
+            <Loader2 className="h-4 w-4 animate-spin text-orange-500 opacity-50" />
+          </div>
+        )}
 
-      {fetchError && (
-        <div className="p-4 text-xs text-red-600 bg-red-50 border-b flex items-center gap-2">
-          <AlertCircle className="h-3 w-3" />
-          Erro ao atualizar dados: {fetchError}
-        </div>
-      )}
+        {fetchError && (
+          <div className="p-4 text-xs text-red-600 bg-red-50 border-b flex items-center gap-2">
+            <AlertCircle className="h-3 w-3" />
+            Erro ao atualizar: {fetchError}
+          </div>
+        )}
 
       <Table>
         <TableHeader className="bg-muted/50">
@@ -169,6 +175,36 @@ export function PartnersTable({ initialData }: Props) {
           )}
         </TableBody>
       </Table>
+   </div>
+
+      {/* Paginação Estilizada */}
+      {meta && meta.totalPages > 1 && (
+        <div className="flex items-center justify-between px-2 text-muted-foreground">
+          <span className="text-[12px] font-medium italic">
+            Página {page} de {meta.totalPages}
+          </span>
+          <div className="flex gap-2 mb-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+              disabled={page === 1 || isLoading}
+              onClick={() => setPage(p => p - 1)}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+              disabled={page === meta.totalPages || isLoading}
+              onClick={() => setPage(p => p + 1)}
+            >
+              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
