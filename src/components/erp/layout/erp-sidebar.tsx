@@ -3,6 +3,7 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/ui/sidebar"
 import { ChevronRight, LayoutDashboard, Users } from "lucide-react"
+import { useEffect } from "react"
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
@@ -40,7 +41,11 @@ const menuItems = [
   /* { title: "Configurações", icon: Settings, url: "/erp/settings" }, */
 ]
 
+
+
 export function ErpSidebar() {
+
+
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader className="h-16 flex items-center justify-center border-b">

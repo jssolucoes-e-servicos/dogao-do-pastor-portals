@@ -1,12 +1,12 @@
 'use client';
 
-import { IUserPartner } from '@/common/interfaces/user-partner.interface';
+import { PartnerEntity } from '@/common/entities';
+import { UserTypesEnum } from '@/common/enums';
+import { ChangePasswordModal } from '@/components/security/change-password-modal';
 import { Button } from '@/components/ui/button';
 import { Edit3, Lock } from 'lucide-react';
 import { useState } from 'react';
-import { ChangePasswordModal } from './change-password-modal';
 import { PartnerEditSheet } from './partner-edit-sheet';
-import { PartnerEntity } from '@/common/entities';
 
 export function ProfileActions({ partner }: { partner: PartnerEntity }) {
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
@@ -33,6 +33,7 @@ export function ProfileActions({ partner }: { partner: PartnerEntity }) {
         isOpen={isPasswordOpen} 
         onClose={() => setIsPasswordOpen(false)} 
         userId={partner.id} 
+        typeUser={UserTypesEnum.PARTNER}
       />
 
       <PartnerEditSheet 

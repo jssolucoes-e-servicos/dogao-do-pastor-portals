@@ -1,5 +1,7 @@
+// src/components/security/change-password-modal.tsx
 'use client';
 
+import { UserTypesEnum } from '@/common/enums';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,9 +17,10 @@ interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId: string;
+  typeUser: UserTypesEnum;
 }
 
-export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordModalProps) {
+export function ChangePasswordModal({ isOpen, onClose, userId, typeUser  }: ChangePasswordModalProps) {
   const [step, setStep] = useState<Step>('REQUEST');
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState('');
@@ -40,7 +43,7 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
     try {
       await fetchApi(FetchCtx.PARTNER,'/auth/request-otp', {
         method: 'POST',
-        body: JSON.stringify({ userId, type: 'PARTNER' }),
+        body: JSON.stringify({ userId, type: typeUser }),
       });
       setStep('VERIFY');
       toast.success("Código enviado ao seu WhatsApp!");
@@ -88,7 +91,7 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
         method: 'PATCH',
         body: JSON.stringify({ 
           userId,
-          type: 'PARTNER',
+          type: typeUser,
           token: validationToken,
           password: passwords.new
         }),
@@ -98,6 +101,7 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
       onClose();
       resetModal();
     } catch (error: any) {
+      console.error(error);
       toast.error(error.message || "Erro ao salvar nova senha.");
     } finally {
       setLoading(false);
@@ -109,8 +113,6 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
       open={isOpen} 
       onOpenChange={(open) => { 
         if (!open) { 
-          // O resetModal só ocorre se o usuário fechar o modal explicitamente
-          // Se clicarmos fora por erro, as travas abaixo evitam o fechamento acidental
           resetModal(); 
           onClose(); 
         } 
@@ -122,7 +124,7 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-black uppercase tracking-tighter text-slate-800">
+          <DialogTitle className="flex items-center gap-2 font-black uppercase tracking-tighter text-foreground">
             <ShieldCheck className="text-orange-600 w-5 h-5" /> Segurança da Conta
           </DialogTitle>
         </DialogHeader>
@@ -130,16 +132,17 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
         <div className="py-4">
           {step === 'REQUEST' && (
             <div className="space-y-6 text-center">
-              <div className="bg-green-50 p-6 rounded-full w-20 h-20 flex items-center justify-center mx-auto border-2 border-green-100">
+              {/* Ajustado: bg-green-500/10 no dark mode e border-green-500/20 */}
+              <div className="bg-green-50 dark:bg-green-500/10 p-6 rounded-full w-20 h-20 flex items-center justify-center mx-auto border-2 border-green-100 dark:border-green-500/20">
                 <MessageCircle className="text-green-600 w-10 h-10" />
               </div>
               <div className="space-y-2">
-                <p className="font-bold text-slate-800">Verificação via WhatsApp</p>
-                <p className="text-sm text-slate-500 px-4">
+                <p className="font-bold text-foreground">Verificação via WhatsApp</p>
+                <p className="text-sm text-muted-foreground px-4">
                   Para alterar sua senha, precisamos confirmar sua identidade enviando um código para o número cadastrado.
                 </p>
               </div>
-              <Button onClick={handleSendOtp} disabled={loading} className="w-full bg-green-600 hover:bg-green-700 h-14 gap-2 font-bold shadow-lg shadow-green-100">
+              <Button onClick={handleSendOtp} disabled={loading} className="w-full bg-green-600 hover:bg-green-700 h-14 gap-2 font-bold shadow-lg shadow-green-600/20 border-none">
                 {loading ? <Loader2 className="animate-spin" /> : "RECEBER CÓDIGO"}
               </Button>
             </div>
@@ -148,21 +151,21 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
           {step === 'VERIFY' && (
             <div className="space-y-6">
               <div className="space-y-3">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-center block text-slate-400">Código de 6 dígitos</Label>
+                <Label className="uppercase text-[10px] font-black tracking-widest text-center block text-muted-foreground">Código de 6 dígitos</Label>
                 <Input 
                   placeholder="000 000" 
-                  className="text-center text-3xl h-16 font-black tracking-[0.3em] border-2 focus-visible:ring-orange-500"
+                  className="text-center text-3xl h-16 font-black tracking-[0.3em] border-2 focus-visible:ring-orange-500 bg-background"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 />
               </div>
-              <Button onClick={handleVerifyOtp} disabled={loading || otp.length < 6} className="w-full h-14 font-bold bg-slate-900 gap-2">
+              <Button onClick={handleVerifyOtp} disabled={loading || otp.length < 6} className="w-full h-14 font-bold bg-primary text-primary-foreground gap-2">
                 {loading ? <Loader2 className="animate-spin" /> : <>VERIFICAR AGORA <ArrowRight className="w-4 h-4" /></>}
               </Button>
               <button 
                 type="button"
                 onClick={() => setStep('REQUEST')} 
-                className="w-full text-xs text-slate-400 font-bold uppercase hover:underline"
+                className="w-full text-xs text-muted-foreground font-bold uppercase hover:underline hover:text-foreground transition-colors"
               >
                 Reenviar código
               </button>
@@ -178,22 +181,24 @@ export function ChangePasswordModal({ isOpen, onClose, userId }: ChangePasswordM
                 <Input 
                   type="password" 
                   placeholder="••••••••"
+                  className="bg-background"
                   value={passwords.new} 
                   onChange={e => setPasswords({...passwords, new: e.target.value})} 
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1">
+                <Label className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1">
                   <Lock className="w-3 h-3" /> Confirmar Nova Senha
                 </Label>
                 <Input 
                   type="password" 
                   placeholder="••••••••"
+                  className="bg-background"
                   value={passwords.confirm} 
                   onChange={e => setPasswords({...passwords, confirm: e.target.value})} 
                 />
               </div>
-              <Button onClick={handleFinish} disabled={loading} className="w-full bg-orange-600 hover:bg-orange-700 h-14 font-black uppercase mt-4 shadow-lg shadow-orange-100">
+              <Button onClick={handleFinish} disabled={loading} className="w-full bg-orange-600 hover:bg-orange-700 h-14 font-black uppercase mt-4 shadow-lg shadow-orange-600/20 border-none">
                 {loading ? <Loader2 className="animate-spin" /> : "SALVAR NOVA SENHA"}
               </Button>
             </div>
