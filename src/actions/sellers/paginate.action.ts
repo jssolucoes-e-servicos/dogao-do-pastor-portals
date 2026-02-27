@@ -5,11 +5,18 @@ import { SellerEntity } from "@/common/entities";
 import { IPaginatedData, IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
-export async function SellersListAction(page = 1): Promise<IResponseObject<IPaginatedData<SellerEntity>>> {
+export async function SellersPaginateAction(page = 1, search = ""): Promise<IResponseObject<IPaginatedData<SellerEntity>>> {
   try {
-    const data = await fetchApi(FetchCtx.ERP, `/sellers?page=${page}`, {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      perPage: "10"
+    });
+
+    if (search) params.append("search", search);
+    const data = await fetchApi(FetchCtx.ERP, `/sellers?${params.toString()}`, {
       cache: "no-store"
-    })
+    });
+
     return {
       success: true,
       data: data

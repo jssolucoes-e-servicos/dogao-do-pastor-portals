@@ -1,4 +1,4 @@
-import { GetByIdAction } from "@/actions/partners/get-by-id.action";
+import { PartnerByIdAction } from "@/actions/partners/get-by-id.action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 
 export default async function PartnerDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { data: partner } = await GetByIdAction(id);
+  const { data: partner } = await PartnerByIdAction(id);
 
   if (!partner)
       return notFound();

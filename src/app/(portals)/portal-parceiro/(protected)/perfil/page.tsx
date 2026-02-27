@@ -1,12 +1,12 @@
+import { PartnerByIdAction } from '@/actions/partners/get-by-id.action';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPartnerSession } from '@/lib/auth-partner-session';
 import { AlertCircle, Building2, Mail, MapPin, Phone } from 'lucide-react';
-import { redirect } from 'next/navigation';
-export const dynamic = 'force-dynamic'
-import { GetByIdAction } from '@/actions/partners/get-by-id.action';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { LogoUpload } from './components/logo-upload';
 import { ProfileActions } from './components/profile-actions';
+export const dynamic = 'force-dynamic'
 
 export default async function PerfilPage() {
   const session = await getPartnerSession();
@@ -15,7 +15,7 @@ export default async function PerfilPage() {
     redirect('/portal-parceiro/acesso');
   }
 
-  const {data: partner} = await GetByIdAction(session.user.id);
+  const {data: partner} = await PartnerByIdAction(session.user.id);
 
   if (!partner) {
     return (

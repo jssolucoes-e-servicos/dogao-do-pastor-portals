@@ -11,6 +11,7 @@ import {
   Phone,
   User
 } from "lucide-react";
+import Link from "next/link";
 import { SendLinkButton } from "./_components/send-link-button"; // Componente cliente para ação
 
 export default async function SellerDetailsPage({ params }: { params: { id: string } }) {
@@ -35,7 +36,9 @@ export default async function SellerDetailsPage({ params }: { params: { id: stri
         </div>
         <div className="flex items-center gap-2">
           <SendLinkButton sellerId={id} />
-          <Button variant="outline" size="sm" className="font-bold">EDITAR CADASTRO</Button>
+          <Link href={`/erp/vendedores/${seller.id}/editar`}>
+            <Button  variant="outline" size="sm" className="font-bold">EDITAR CADASTRO</Button>
+          </Link>
         </div>
       </div>
 
@@ -49,11 +52,11 @@ export default async function SellerDetailsPage({ params }: { params: { id: stri
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-600/20 flex items-center justify-center text-orange-600 font-bold">
-                {seller.contributor.name.substring(0,2).toUpperCase()}
+                {seller.name.substring(0,2).toUpperCase()}
               </div>
               <div>
-                <p className="font-bold leading-none">{seller.contributor.name}</p>
-                <p className="text-xs text-muted-foreground">@{seller.contributor.username}</p>
+                <p className="font-bold leading-none">{seller.name}</p>
+                <p className="text-xs text-muted-foreground">{seller.contributor.name}</p>
               </div>
             </div>
             <Separator />

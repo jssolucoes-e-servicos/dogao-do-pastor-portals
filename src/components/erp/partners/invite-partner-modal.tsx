@@ -103,7 +103,7 @@ export function InvitePartnerModal({ partner, mode = "create" }: InvitePartnerMo
     <Dialog onOpenChange={(open) => !open && resetModal()}>
       <DialogTrigger asChild>
         {mode === "create" ? (
-          <Button variant="outline">
+          <Button className="bg-orange-600 hover:bg-orange-700 font-bold gap-2 h-10">
             <UserPlus className="mr-2 h-4 w-4" /> Gerar Convite
           </Button>
         ) : (

@@ -39,6 +39,7 @@ const menuItems = [
     title: "Cadastros Auxiliares",
     icon: UsersRound,
     items: [
+      { title: "Colaboradores", url: "/erp/colaboradores" },
       { title: "Vendedores", url: "/erp/vendedores" },
       { title: "Células", url: "/erp/celulas" },
       { title: "Redes de Células", url: "/erp/redes-de-celulas" },

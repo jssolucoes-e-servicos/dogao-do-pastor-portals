@@ -1,43 +1,29 @@
 // src/app/erp/(protected)/partners/page.tsx
-import { ListPartnersAllAction } from "@/actions/partners/list-partners-all.action";
-import { InvitePartnerModal } from "@/components/erp/partners/invite-partner-modal";
+import { PartnersPaginateAction } from "@/actions/partners/paginate.action";
 import { PartnersTable } from "@/components/erp/tables/partners-table";
 import { Suspense } from "react";
 
 export const dynamic = 'force-dynamic'
 
 export default async function PartnersPage() {
-  // Busca inicial server-side
-  const result = await ListPartnersAllAction();
+
+  const result = await PartnersPaginateAction();
   
-  // No server side, se falhar, podemos passar uma array vazia ou tratar o erro
-  const initialPartners = result.success ? (result.data || []) : [];
+  if (!result.success || !result.data) {
+    return (
+      <div className="p-8 text-center text-red-600 bg-red-50 rounded-lg border border-red-200">
+        Erro ao carregar dados iniciais. Por favor, atualize a página.
+      </div>
+    );
+  }
+
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Parceiros</h2>
-          <p className="text-muted-foreground">Gerencie as instituições e o fluxo de doações.</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
+    <Suspense fallback={<div className="p-8 text-center text-muted-foreground uppercase font-black animate-pulse">Carregando...</div>}>
+      <PartnersTable initialData={result.data} />
+       {/*   <div className="flex items-center gap-3">
           <InvitePartnerModal />
-        </div>
-      </div>
-
-      {/* Exibição de erro caso a carga inicial falhe feio */}
-      {!result.success && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg text-sm">
-          Aviso: Não foi possível carregar os dados atualizados. Exibindo cache local.
-        </div>
-      )}
-
-      <div className="bg-card rounded-xl border shadow-sm">
-        <Suspense fallback={<div className="p-8 text-center text-muted-foreground animate-pulse">Carregando lista de parceiros...</div>}>
-          <PartnersTable initialData={initialPartners} />
-        </Suspense>
-      </div>
-    </div>
+        </div> */}
+    </Suspense>
   );
 }

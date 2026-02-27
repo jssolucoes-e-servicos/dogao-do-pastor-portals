@@ -5,7 +5,7 @@ import { PartnerEntity } from "@/common/entities";
 import { IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
-export const GetByIdAction = async (id: string): Promise<IResponseObject<PartnerEntity>> => {
+export const PartnerByIdAction = async (id: string): Promise<IResponseObject<PartnerEntity>> => {
   try {
     const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/find/${id}`, {
       cache: "no-store"
