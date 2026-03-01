@@ -1,7 +1,7 @@
 // src/app/(erp)/vendedores/[id]/editar/page.tsx
 import { CellsListAllAction } from "@/actions/cells/list-all.action";
 import { SellersByIdAction } from "@/actions/sellers/find-by-id.action";
-import { EditPageContents } from "@/components/erp/shared/edit-page-contents";
+import { EditPageContents } from "@/components/erp/shared/edit-page/edit-page-contents";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";

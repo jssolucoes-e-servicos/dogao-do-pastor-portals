@@ -2,7 +2,7 @@
 
 import { ContributorsByIdAction } from "@/actions/contributors/find-by-id.action";
 import { ContributorFormEdit } from "@/components/erp/edit-forms/contributors-edit";
-import { EditPageContents } from "@/components/erp/shared/edit-page-contents";
+import { EditPageContents } from "@/components/erp/shared/edit-page/edit-page-contents";
 import { notFound } from "next/navigation";
 
 interface Props {

@@ -2,7 +2,7 @@
 
 import { CellsNetworksByIdAction } from "@/actions/cells-networks/find-by-id.action";
 import { CellNetworkFormEdit } from "@/components/erp/edit-forms/cell-network-edit";
-import { EditPageContents } from "@/components/erp/shared/edit-page-contents";
+import { EditPageContents } from "@/components/erp/shared/edit-page/edit-page-contents";
 import { notFound } from "next/navigation";
 
 interface Props {

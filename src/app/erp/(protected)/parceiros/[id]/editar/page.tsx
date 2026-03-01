@@ -1,7 +1,7 @@
 // src/app/erp/(protected)/partners/[id]/editar/page.tsx
 import { PartnerByIdAction } from "@/actions/partners/get-by-id.action";
 import { PartnerFormEdit } from "@/components/erp/edit-forms/partner-edit";
-import { EditPageContents } from "@/components/erp/shared/edit-page-contents";
+import { EditPageContents } from "@/components/erp/shared/edit-page/edit-page-contents";
 import { notFound } from "next/navigation";
 
 interface EditPartnerPageProps {

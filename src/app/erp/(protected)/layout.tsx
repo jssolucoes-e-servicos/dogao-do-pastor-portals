@@ -12,14 +12,14 @@ export default async function ErpLayout({ children }: { children: React.ReactNod
   const userDataCookie = cookieStore.get("ddp-ctb-01")?.value;
   
   if (!userDataCookie) {
-    redirect("/login"); // Garante que se não houver cookie, ele sai do layout
+    redirect("/erp/acesso"); // Garante que se não houver cookie, ele sai do layout
   }
 
   let user;
   try {
     user = JSON.parse(decodeURIComponent(userDataCookie));
   } catch (e) {
-    redirect("/login"); // Se o cookie estiver corrompido, redireciona
+    redirect("/erp/acesso"); // Se o cookie estiver corrompido, redireciona
   }
 
   return (

@@ -5,16 +5,23 @@ import { CustomersPaginateAction } from "@/actions/customers/paginate.action";
 import { CustomerEntity } from "@/common/entities";
 import { StringsHelper } from "@/common/helpers/string-helpers";
 import { IPaginatedData } from "@/common/interfaces";
-import { TablePagination } from "@/components/erp/shared/table-pagination";
-import { TableStates } from "@/components/erp/shared/table-states";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TablePageContainer, TablePageContent } from '@/components/erp/shared/table-page';
+import {
+  TableActions,
+  TableCardContents,
+  TableContents,
+  TableEmpty,
+  TableHeaderCustom,
+  TableHeaders,
+  TableHeadersItem,
+  TablePagination,
+  TableStates
+} from "@/components/erp/shared/tables";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Edit, Eye } from "lucide-react";
-import Link from "next/link";
+import { Calendar, Fingerprint, Mail, Smartphone, User } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
-import { TableHeaderCustom } from "../shared/table-header-custom";
 
 interface Props {
   initialData: IPaginatedData<CustomerEntity>;
@@ -24,7 +31,6 @@ export function CustomerErpTable({ initialData }: Props) {
   const [page, setPage] = useState<number>(1);
   const [search, setSearch] = useState("");
 
-  // Correção da chave do SWR: deve ser um array para reagir à mudança da 'page'
   const { data: response, isLoading } = useSWR(
     [`customers-list`, page, search], 
     () => CustomersPaginateAction(page, search), 
@@ -42,120 +48,96 @@ export function CustomerErpTable({ initialData }: Props) {
   const fetchError = response?.success === false ? response.error : null;
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-0">
-          <TableHeaderCustom 
-            title="Clientes"
-            description="Gerencie os clientes"
-            onSearch={(val) => {
-              setSearch(val);
-              setPage(1);
-            }}
-            /* buttonLabel="Novo Cliente"
-            buttonHref="/erp/clientes/novo" */
-          />
-      <div className="flex flex-col gap-4">
-        <div className="rounded-md border relative bg-card shadow-sm">
-          <TableStates isLoading={isLoading} error={fetchError} />
+    <TablePageContainer>
+      <TableHeaderCustom 
+        title="Clientes"
+        description="Gerencie os clientes e seus vínculos"
+        onSearch={(val) => {
+          setSearch(val);
+          setPage(1);
+        }}
+      />
 
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="font-bold text-xs uppercase text-foreground">Nome</TableHead>
-                <TableHead className="font-bold text-xs uppercase text-foreground">Contato</TableHead>
-                <TableHead className="font-bold text-xs uppercase text-foreground text-center">Qualificador</TableHead>
-                <TableHead className="font-bold text-xs uppercase text-foreground text-center">Cliente desde</TableHead>
-                <TableHead className="text-right font-bold text-xs uppercase text-foreground">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <AlertCircle className="h-8 w-8 opacity-20" />
-                      <p>Nenhum cliente encontrado.</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                displayData.map((customer) => {
-                  const dateFormatted = new Intl.DateTimeFormat('pt-BR').format(new Date(customer.createdAt));
+      <TablePageContent>
+        <TableStates isLoading={isLoading} error={fetchError} />
 
-                  return (
-                    <TableRow key={customer.id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell className="py-4">
-                        <div className="flex items-center gap-3">
+        <TableHeaders cols={5}>
+          <TableHeadersItem>Cliente</TableHeadersItem>
+          <TableHeadersItem>Contato</TableHeadersItem>
+          <TableHeadersItem className="text-center">Qualificadores</TableHeadersItem>
+          <TableHeadersItem className="text-center">Cadastro</TableHeadersItem>
+          <TableHeadersItem action>Ações</TableHeadersItem>
+        </TableHeaders>
+
+        {displayData.length === 0 && !isLoading ? (
+          <TableEmpty />
+        ) : (
+          <TableContents>
+            {displayData.map((customer: CustomerEntity) => {
+              const dateFormatted = new Intl.DateTimeFormat('pt-BR').format(new Date(customer.createdAt));
               
-                          <div className="flex flex-col">
-                            <span className="font-bold text-sm leading-tight text-foreground">
-                              {customer.name}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground uppercase font-medium mt-0.5">
-                              CPF: {customer.cpf ? StringsHelper.maskSecureCPF(customer.cpf) : "NÃO INFORMADO"}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex flex-col leading-tight">
-                          <span className="text-sm font-medium">{customer.phone}</span>
-                          <span className="text-[11px] text-muted-foreground">{customer.email}</span>
-                        </div> 
-                      </TableCell>
+              return (
+                <TableCardContents key={customer.id} cols={5}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/30 items-center justify-center text-blue-600">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <h3 className="font-bold text-sm uppercase truncate text-foreground leading-tight">
+                        {customer.name}
+                      </h3>
+                      <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Fingerprint className="h-3 w-3" />
+                        {customer.cpf ? StringsHelper.maskSecureCPF(customer.cpf) : "NÃO INFORMADO"}
+                      </span>
+                    </div>
+                  </div>
 
-                      <TableCell className="text-center">
-                        <div className="flex flex-col items-center gap-1 text-[11px]">
-                          <div className="flex gap-1">
-                            <span className="text-muted-foreground italic">Conhece a IVC:</span>
-                            <span className={cn("font-bold uppercase", customer.knowsChurch ? "text-green-600" : "text-red-600")}>
-                              {customer.knowsChurch ? "Sim" : "Não"}
-                            </span>
-                          </div>
-                          <div className="flex gap-1">
-                            <span className="text-muted-foreground italic">Permite contato:</span>
-                            <span className={cn("font-bold uppercase", customer.allowsChurch ? "text-green-600" : "text-red-600")}>
-                              {customer.allowsChurch ? "Sim" : "Não"}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
+                  <div className="flex flex-col border-y md:border-none py-3 md:py-0 border-dashed border-slate-100 dark:border-slate-800">
+                    <span className="md:hidden text-[9px] font-black text-muted-foreground uppercase mb-1 opacity-70">Contato</span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                      <Smartphone className="h-3 w-3 text-emerald-600 md:hidden" />
+                      {customer.phone}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1 truncate">
+                      <Mail className="h-3 w-3" /> {customer.email || 'N/A'}
+                    </span>
+                  </div>
 
-                      <TableCell className="text-center">
-                        <span className="text-sm tabular-nums text-muted-foreground font-medium">
-                          {dateFormatted}
-                        </span>
-                      </TableCell>
+                  <div className="flex flex-col md:items-center gap-1.5">
+                    <span className="md:hidden text-[9px] font-black text-muted-foreground uppercase mb-1 opacity-70">Qualificadores</span>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className={cn("text-[8px] font-black uppercase px-1.5", customer.knowsChurch ? "border-green-500 text-green-600" : "opacity-40")}>
+                        IVC: {customer.knowsChurch ? "SIM" : "NÃO"}
+                      </Badge>
+                      <Badge variant="outline" className={cn("text-[8px] font-black uppercase px-1.5", customer.allowsChurch ? "border-green-500 text-green-600" : "border-red-400 text-red-500")}>
+                        CONTATO: {customer.allowsChurch ? "OK" : "NÃO"}
+                      </Badge>
+                    </div>
+                  </div>
 
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" title="Visualizar" asChild>
-                            <Link href={`/erp/clientes/${customer.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-600 hover:bg-slate-100" title="Editar" asChild>
-                            <Link href={`/erp/clientes/${customer.id}/editar`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                  <div className="flex flex-col md:items-center">
+                    <span className="md:hidden text-[9px] font-black text-muted-foreground uppercase mb-1 opacity-70">Cliente desde</span>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span className="text-xs tabular-nums font-medium">{dateFormatted}</span>
+                    </div>
+                  </div>
+
+                  <TableActions path="clientes" id={customer.id} />
+                </TableCardContents>
+              );
+            })}
+          </TableContents>
+        )}
 
         <TablePagination 
           page={page}
           totalPages={meta?.totalPages || 0}
           isLoading={isLoading}
-          onPageChange={(newPage) => setPage(newPage)}
+          onPageChange={setPage}
         />
-      </div>
-    </div>
+      </TablePageContent>
+    </TablePageContainer>
   );
 }

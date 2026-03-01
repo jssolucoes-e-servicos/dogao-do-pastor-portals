@@ -4,7 +4,7 @@
 import { AuthContributorLogoutAction } from "@/actions/auth/contributor-login.action"
 import { UserTypesEnum } from "@/common/enums"
 import { ChangePasswordModal } from "@/components/security/change-password-modal"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -15,6 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { User } from "lucide-react"
+import Link from "next/link"
 import { Fragment, useState } from "react"
 
 interface UserNavProps {
@@ -22,19 +24,12 @@ interface UserNavProps {
     id: string;
     name: string;
     email?: string;
+    photo?: string;
   };
 }
 
 export function UserNav({ user }: UserNavProps) {
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-
-  const initials = user.name
-    .split(" ")
-    .filter(Boolean)
-    .map(n => n[0])
-    .join("")
-    .toUpperCase()
-    .substring(0, 2) || "CT";
 
   return (
     <Fragment>
@@ -42,8 +37,9 @@ export function UserNav({ user }: UserNavProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-orange-100 bg-orange-50/50">
             <Avatar className="h-9 w-9">
+              <AvatarImage src={user.photo} alt={user.name} className="object-cover" />
               <AvatarFallback className="bg-orange-600 text-white font-bold">
-                {initials}
+                {user.name.charAt(0).toUpperCase() || <User size={40} />}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -61,7 +57,8 @@ export function UserNav({ user }: UserNavProps) {
           
           <DropdownMenuGroup>
             <DropdownMenuItem className="cursor-pointer">
-              Minha Conta
+              <Link href="/erp/perfil">Minha Conta</Link>
+              
             </DropdownMenuItem>
             <DropdownMenuItem 
               className="cursor-pointer" 

@@ -14,9 +14,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt_BR">
-      <body suppressHydrationWarning={true} suppressContentEditableWarning={true}>
-        {children}
+    <html lang="pt-BR" className="h-full">
+      <body 
+        suppressHydrationWarning={true}
+        className="h-full antialiased bg-background"
+      >
+        {/* Este wrapper garante que nada vaze horizontalmente */}
+        <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+          <main className="flex-1 w-full max-w-[100vw]">
+            {children}
+          </main>
+        </div>
         <Toaster richColors position="bottom-right" />
       </body>
     </html>
