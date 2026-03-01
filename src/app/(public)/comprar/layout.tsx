@@ -1,12 +1,11 @@
 import { getActiveEdition } from "@/actions/editions/get-active.action";
+import { INFORMATIONS } from "@/common/configs/info";
 import { NumbersHelper } from "@/common/helpers/numbers-helper";
 import { SaleGuard } from "@/components/public/sale-guard";
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import Image from "next/image";
-
-const VERSION = '1.1.14b';
 
 export const metadata: Metadata = {
   title: "Dogão do Pastor",
@@ -59,7 +58,7 @@ export default async function RootLayout({
               <a href="https://igrejavivaemcelulas.com.br" target="_blank" className="text-gray-500 font-bold">
                 Igreja Viva em Células
               </a>
-              <span className="text-gray-300 font-mono text-[10px]">{VERSION}</span>
+              <span className="text-gray-300 font-mono text-[10px]">{INFORMATIONS.version}</span>
             </div>
           </footer>
         </main>
