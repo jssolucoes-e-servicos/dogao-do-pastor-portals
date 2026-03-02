@@ -18,7 +18,7 @@ export default async function PreVenda({ searchParams }: PreVendaProps) {
       {/* O NoSSRWrapper garante que o OrderOnlineInitialStep 
           SÓ seja renderizado no navegador, eliminando o erro #418.
       */}
-      <NoSSRWrapper s>
+      <NoSSRWrapper>
         <OrderOnlineInitialStep sellerTag={sellerSlug} />
       </NoSSRWrapper>
     </Fragment>
