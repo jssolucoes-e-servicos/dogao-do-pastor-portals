@@ -7,7 +7,8 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import Image from "next/image";
 
-export const revalidate = 1800; // Cache de 30 minutos
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;//1800; // Cache de 30 minutos
 
 export const metadata: Metadata = {
   title: "Dogão do Pastor",
@@ -24,7 +25,11 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-br" suppressHydrationWarning>
-      <body className="h-full antialiased bg-background" suppressHydrationWarning>
+      <body 
+        className="h-full antialiased bg-background"
+        suppressHydrationWarning
+        key={canSell ? 'sale-open' : 'sale-close'}
+      >
         <main className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:p-24 bg-gray-50 text-slate-900">
 
           <header className="z-10 w-full max-w-5xl flex items-center justify-center mb-8">
