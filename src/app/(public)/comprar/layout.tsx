@@ -19,12 +19,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Recebe apenas os parâmetros prontos do servidor
+  // Recebe os parâmetros do servidor
   const { edition, canSell, isWaiting, startFormatted } = await getValidatedSaleStatus();
 
   return (
     <html lang="pt-br" suppressHydrationWarning>
-      <body className="h-full antialiased bg-background">
+      {/* 1. O suppressHydrationWarning no BODY é obrigatório se 
+             alguma extensão ou o próprio Next injetar classes (bg-background, h-full).
+      */}
+      <body className="h-full antialiased bg-background" suppressHydrationWarning>
         <main className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:p-24 bg-gray-50 text-slate-900">
           
           <header className="z-10 w-full max-w-5xl flex items-center justify-center mb-8">
@@ -39,7 +42,11 @@ export default async function RootLayout({
             />
           </header>
 
-          <div className="relative flex place-items-center flex-col w-full">
+          {/* 2. O suppressHydrationWarning aqui na DIV evita que o React tente 
+                 validar a diferença entre o formulário (children) e a mensagem 
+                 de erro caso o cache de 30min entregue algo "atrasado".
+          */}
+          <div className="relative flex place-items-center flex-col w-full" suppressHydrationWarning>
             {canSell && edition ? (
               <>
                 <h2 className="text-1xl font-black text-center mb-1 uppercase tracking-tighter text-slate-900">

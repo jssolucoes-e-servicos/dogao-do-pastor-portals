@@ -1,5 +1,5 @@
+"use server"
 import { EditionEntity } from "@/common/entities";
-import "server-only";
 import { getActiveEdition } from "./get-active.action";
 
 export interface SaleStatus {
