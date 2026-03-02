@@ -108,7 +108,7 @@ export default async function RootLayout({
               >
                 Igreja Viva em Células
               </a>
-              <span className="text-gray-300 font-mono text-[10px]">{INFORMATIONS.version}</span>
+              <span className="text-gray-300 font-mono text-[10px]">{`${INFORMATIONS.version} (${INFORMATIONS.build})`}</span>
             </div>
           </footer>
         </main>
