@@ -1,5 +1,5 @@
 // src/app/layout.tsx
-import { getActiveEdition } from "@/actions/editions/get-active.action";
+import { getValidatedSaleStatus } from "@/actions/editions/validate-sale";
 import { INFORMATIONS } from "@/common/configs/info";
 import { NumbersHelper } from "@/common/helpers/numbers-helper";
 import { Toaster } from "@/components/ui/sonner";
@@ -7,8 +7,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import Image from "next/image";
 
-// Cache de 30 minutos conforme sua necessidade
-export const revalidate = 1800;
+export const revalidate = 1800; // Cache de 30 minutos
 
 export const metadata: Metadata = {
   title: "Dogão do Pastor",
@@ -20,48 +19,20 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const response = await getActiveEdition();
-  const edition = response?.edition;
-
-  // Lógica de Tempo (Server Side)
-  const now = new Date();
-  
-  let canSell = false;
-  let isWaiting = false;
-  let startFormatted = "";
-
-  if (edition && edition.active) {
-    const start = new Date(edition.autoEnableDate);
-    const end = new Date(edition.autoDisableDate);
-    
-    startFormatted = start.toLocaleString('pt-BR', { 
-      timeZone: 'America/Sao_Paulo',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    isWaiting = now < start;
-    const isSaleOpen = now >= start && now <= end;
-    const hasStock = edition.dogsSold < edition.limitSale;
-    
-    canSell = isSaleOpen && hasStock;
-  }
+  // Recebe apenas os parâmetros prontos do servidor
+  const { edition, canSell, isWaiting, startFormatted } = await getValidatedSaleStatus();
 
   return (
     <html lang="pt-br" suppressHydrationWarning>
       <body className="h-full antialiased bg-background">
         <main className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:p-24 bg-gray-50 text-slate-900">
-          {/* HEADER AJUSTADO PARA CENTRALIZAÇÃO TOTAL */}
+          
           <header className="z-10 w-full max-w-5xl flex items-center justify-center mb-8">
             <Image
               src="/assets/images/dogao-do-pastor.svg"
               alt="Dogão do Pastor Logo"
               width={150}
               height={150}
-              // mx-auto garante a centralização, height: auto cala o erro do console
               className="mx-auto"
               style={{ height: 'auto', width: '150px' }} 
               priority
@@ -108,7 +79,9 @@ export default async function RootLayout({
               >
                 Igreja Viva em Células
               </a>
-              <span className="text-gray-300 font-mono text-[10px]">{`${INFORMATIONS.version} (${INFORMATIONS.build})`}</span>
+              <span className="text-gray-300 font-mono text-[10px]">
+                {`${INFORMATIONS.version} (${INFORMATIONS.build})`}
+              </span>
             </div>
           </footer>
         </main>
