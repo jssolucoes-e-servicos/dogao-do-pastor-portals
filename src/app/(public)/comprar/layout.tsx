@@ -75,16 +75,16 @@ export default async function RootLayout({
 
           <footer className="z-10 w-full max-w-5xl items-center justify-center font-mono text-xs flex mt-16">
             <div className="flex flex-col items-center justify-center p-4 space-y-1">
-              <span className="text-gray-400 uppercase font-bold text-[10px]">Um projeto da</span>
+              <span className="text-gray-600 uppercase font-bold text-[10px]">Um projeto da</span>
               <a
                 href="https://igrejavivaemcelulas.com.br"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-500 hover:text-orange-600 transition-colors font-bold"
+                className="text-gray-700 hover:text-orange-600 transition-colors font-bold"
               >
-                Igreja Viva em Células
+                Igreja Viva em Células (IVC)
               </a>
-              <span className="text-gray-300 font-mono text-[10px]">
+              <span className="text-gray-600 font-mono text-[10px]">
                 {`${INFORMATIONS.version} (${INFORMATIONS.build})`}
               </span>
             </div>

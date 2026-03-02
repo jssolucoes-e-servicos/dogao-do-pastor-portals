@@ -27,7 +27,7 @@ export function StepOrderTypeSelect({ deliveryOption, setDeliveryOption, type }:
       onClick={() => setDeliveryOption(type)}
       className={cn(
         "flex flex-col items-center justify-center p-4 h-auto w-full flex-1",
-        deliveryOption === type ? 'bg-primary text-primary-foreground border-orange-700 border-4' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 hover:text-black'
+        deliveryOption === type ? 'bg-slate-900 text-primary-foreground border-amber-600 border-4' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 hover:text-black'
       )}
     >
       <Image

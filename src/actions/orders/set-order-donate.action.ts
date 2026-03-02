@@ -11,13 +11,18 @@ export const SetOrderDonateAction = async (
   observations?: string // Novo parâmetro opcional
 ): Promise<IResponseObject<OrderEntity>> => {
   try {
+    const dataSend: any = {
+      orderId,
+      partnerId,
+    };
+
+    if (observations && observations.trim().length > 0) {
+      dataSend.observations = observations.trim();
+    }
+    console.log(dataSend);
     const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/set-donation`, {
       method: 'POST',
-      body: JSON.stringify({
-        orderId,
-        partnerId,
-        observations, // Enviando para o backend
-      })
+      body: JSON.stringify(dataSend)
     });
     return {
       success: true,

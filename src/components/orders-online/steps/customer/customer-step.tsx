@@ -12,6 +12,8 @@ import { PencilIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { OrderOnlineButtonAction } from "../../button-action";
+import { OrderOnlineContentsBase } from "../../content-base";
 
 export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
   const router = useRouter();
@@ -27,7 +29,7 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
   });
 
   useEffect(() => {
-    if (!order.customer.firstRegister) {
+    if (order.customer.firstRegister) {
       setCustomerFormData({
         name: order.customer.name,
         email: order.customer.email || '',
@@ -162,14 +164,18 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
 
   return (
     <Fragment>
-      <div className="flex flex-col gap-6 p-4 rounded-lg bg-white shadow-lg w-full">
-        <h2 className="text-2xl font-bold text-center">Confirme seus dados</h2>
-
+      <OrderOnlineContentsBase
+        title="Confirme seus dados"
+        orderId={order.id}
+        noBack={true}
+      >
         {!isFormEditable && !order.customer.firstRegister ? renderSummary() : renderForm()}
-        <Button onClick={handleProcessEntry} disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700">
-          {isLoading ? 'Salvando...' : 'Montar pedido'}
-        </Button>
-      </div>
+        <OrderOnlineButtonAction
+          title="Montar pedido"
+          isLoading={isLoading}
+          handleAction={handleProcessEntry}
+        />
+      </OrderOnlineContentsBase>
     </Fragment>
   );
 }

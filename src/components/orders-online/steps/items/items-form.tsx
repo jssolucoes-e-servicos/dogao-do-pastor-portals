@@ -13,6 +13,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from "sonner";
+import { OrderOnlineButtonAction } from '../../button-action';
+import { OrderOnlineContentsBase } from '../../content-base';
 
 interface IGroupedItem extends IOrderItemSend {
   quantity: number;
@@ -105,11 +107,10 @@ export function ItemsForm({ order }: { order: OrderEntity }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 rounded-lg bg-white shadow-lg w-full max-w-2xl mx-auto">
-      <div className="text-center border-b pb-4">
-        <h2 className="text-2xl font-bold">Meus Dogões</h2>
-        <p className="text-xs text-gray-500">Edição: {order.edition.name}</p>
-      </div>
+    <OrderOnlineContentsBase
+      title="Monte seu Pedido"
+      orderId={order.id}
+    >
 
       <div className="space-y-4">
         {groupedItems.length === 0 ? (
@@ -220,19 +221,19 @@ export function ItemsForm({ order }: { order: OrderEntity }) {
         </div>
       </div>
 
-      <Button
-        className="w-full bg-orange-600 hover:bg-orange-700 h-12 font-bold"
-        onClick={handleProccessItems}
-        disabled={orderItems.length === 0 || isLoading}
-      >
-        {isLoading ? 'Salvando Itens...' : 'Avançar para tipo de pedido'}
-      </Button>
+      {orderItems.length > 0 && (
+        <OrderOnlineButtonAction 
+          title='Avançar para tipo de pedido'
+          isLoading={isLoading}
+          handleAction={handleProccessItems}
+        />
+      )}
 
       <HotDogModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveCustomization}
       />
-    </div>
+    </OrderOnlineContentsBase>
   );
 }

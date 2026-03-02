@@ -3,7 +3,6 @@
 import { ChangePaymentMethodAction } from "@/actions/orders/change-payment-method.action";
 import { GenerateOrderCardAction } from "@/actions/payments/generate-order-card.action";
 import { OrderEntity } from "@/common/entities";
-import { NumbersHelper } from "@/common/helpers/numbers-helper";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
@@ -11,6 +10,8 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CardTotal } from "../../card-total";
+import { OrderOnlineContentsBase } from "../../content-base";
 
 interface PaymentCardProps {
   order: OrderEntity;
@@ -73,14 +74,13 @@ export function PaymentCard({ order }: PaymentCardProps) {
     }
 
   return (
-    <div className="flex flex-col gap-6 p-4 rounded-lg bg-white shadow-lg w-full">
-      <h2 className="text-2xl font-bold text-center">Seu Pedido</h2>
-      <div className=" p-4 bg-gray-100 rounded-md">
-        <div className="flex justify-between items-center font-bold text-lg">
-          <span>Total ({order.items?.length} Dogões):</span>
-          <span>{NumbersHelper.formatCurrency(order.totalValue)}</span>
-        </div>
-      </div>
+    <OrderOnlineContentsBase
+      title="Seu Pedido"
+      orderId={order.id}
+    >
+      {
+        order.items && order.items?.length > 0 && (<CardTotal count={order.items.length} value={order.totalValue}/>)
+      }
       <h2 className="text-xl lg:text-2xl font-bold text-center">Pagamento com Cartão
         <Button 
           onClick={handleChange}
@@ -108,6 +108,6 @@ export function PaymentCard({ order }: PaymentCardProps) {
         </Fragment>
       )}
     </div>
-    </div>
+    </OrderOnlineContentsBase>
   );
 }
