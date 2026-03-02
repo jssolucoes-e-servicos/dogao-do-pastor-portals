@@ -16,6 +16,7 @@ export function OrderOnlineInitialStep({ sellerTag }: { sellerTag: string }) {
 
   // Garante que o componente só renderize no cliente após a hidratação
   useEffect(() => {
+    console.log('sistema carregado');
     setIsMounted(true);
   }, []);
 
