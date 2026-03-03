@@ -1,7 +1,6 @@
-// components/order-online/steps/order-type/order-type-contents.tsx
 'use client';
 
-import { createAddressAction } from '@/actions/customers-addresses/create-address.action';
+import { CreateAddressAction } from '@/actions/customers-addresses/create-address.action';
 import { SendToAnalysisAction } from '@/actions/orders/send-to-analysis.action';
 import { SetOrderDeliveryAction } from '@/actions/orders/set-order-delivery.action';
 import { SetOrderDonateAction } from '@/actions/orders/set-order-donate.action';
@@ -44,29 +43,11 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
   const { data: partnersResponse, isLoading: isLoadingPartners } = useSWR(
     'partners-for-orders',
     () => ListPartnersForOrdersAction(),
-    { revalidateOnFocus: false, dedupingInterval: 60000 }
+    { revalidateOnFocus: false }
   );
 
   const partners = partnersResponse?.data || [];
   const [showLimitModal, setShowLimitModal] = useState(false);
-
-  // Seleção padrão (sem fechamento de fluxo)
-  const handlePartnerSelect = (id: string, suggestion?: string) => {
-    setSelectedPartnerId(id);
-    setSuggestionText(suggestion); 
-  };
-
-  // ENVIO DIRETO (Atalho usado pelo modal de sugestão)
-  const handleDonateAndPayDirectly = async (id: string, suggestion?: string) => {
-    setIsLoadingAction(true);
-    try {
-      await SetOrderDonateAction(order.id, id, suggestion);
-      router.push(`/comprar/${order.id}/pagamento`);
-    } catch (error: any) {
-      toast.error(error.message || "Falha ao processar doação.");
-      setIsLoadingAction(false);
-    }
-  };
 
   const handleFinalizeAndPay = async () => {
     setIsLoadingAction(true);
@@ -82,59 +63,63 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
       } 
       else if (deliveryOption === DeliveryOptionEnum.DELIVERY) {
         let finalAddressId = addressSelectedId;
+
         if (showNewAddressForm || !finalAddressId) {
-          if (!addressData.street || !addressData.number) throw new Error("Preencha o endereço completo.");
-          const response = await createAddressAction({ ...addressData, customerId: order.customerId });
-          finalAddressId = response.data?.id || addressSelectedId;
+          if (!addressData.street || !addressData.number || !addressData.zipCode) {
+            throw new Error("Endereço incompleto.");
+          }
+
+          const response = await CreateAddressAction({
+            customerId: order.customerId,
+            street: addressData.street,
+            number: addressData.number,
+            neighborhood: addressData.neighborhood!,
+            city: addressData.city!,
+            state: addressData.state!,
+            zipCode: addressData.zipCode,
+            complement: addressData.complement,
+          });
+
+          if (!response.success) throw new Error(response.error);
+          finalAddressId = response.data?.id || null;
         }
-        const fullAddress = `${addressData.street}, ${addressData.number}, ${addressData.neighborhood}`;
+
+        const fullAddress = `${addressData.street}, ${addressData.number}, ${addressData.neighborhood}, ${addressData.city}, ${addressData.zipCode}`;
         const distance = await getDistanceBetween(Company.address.lat, Company.address.lng, fullAddress);
+        
         setDistanceKm(distance);
+        setAddressSelectedId(finalAddressId);
 
         if (distance && distance > 5) {
           setShowLimitModal(true);
           setIsLoadingAction(false);
           return;
         }
-        await SetOrderDeliveryAction(order.id, finalAddressId as string);
+
+        if (!finalAddressId) throw new Error("Erro ao processar endereço.");
+        await SetOrderDeliveryAction(order.id, finalAddressId);
         router.push(`/comprar/${order.id}/pagamento`);
       }
     } catch (error: any) {
-      toast.error(error.message || "Falha ao processar pedido.");
-      setIsLoadingAction(false);
-    }
-  };
-
-  const onSendToReview = async () => {
-    try {
-      setIsLoadingAction(true);
-      if (!addressSelectedId || distanceKm === null) throw new Error("Dados incompletos.");
-      await SendToAnalysisAction(order.id, addressSelectedId, distanceKm);
-      router.push(`/comprar/${order.id}/analise`);
-    } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Erro ao processar.");
       setIsLoadingAction(false);
     }
   };
 
   return (
-    <OrderOnlineContentsBase
-      title='Tipo de pedido'
-      subtitle='Selecione uma opção para o seu pedido.'
-      orderId={order.id}
-    >
-
-      <OrderTypeSelectContent 
-        deliveryOption={deliveryOption} 
-        setDeliveryOption={setDeliveryOption} 
-      />
+    <OrderOnlineContentsBase title='Tipo de pedido' subtitle='Selecione uma opção.' orderId={order.id}>
+      <OrderTypeSelectContent deliveryOption={deliveryOption} setDeliveryOption={setDeliveryOption} />
 
       {deliveryOption === DeliveryOptionEnum.PICKUP && <TypePickup />}
       
       {deliveryOption === DeliveryOptionEnum.DONATE && (
         <TypeDonate 
-          onSelect={handlePartnerSelect} 
-          onDirectSubmit={handleDonateAndPayDirectly}
+          onSelect={(id, sug) => { setSelectedPartnerId(id); setSuggestionText(sug); }} 
+          onDirectSubmit={async (id, sug) => {
+            setIsLoadingAction(true);
+            await SetOrderDonateAction(order.id, id, sug);
+            router.push(`/comprar/${order.id}/pagamento`);
+          }}
           selectedId={selectedPartnerId} 
           partners={partners}
         />
@@ -155,20 +140,22 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
         isOpen={showLimitModal}
         onClose={() => setShowLimitModal(false)}
         onPickupSelect={() => { setDeliveryOption(DeliveryOptionEnum.PICKUP); setShowLimitModal(false); }}
-        onSendToReview={onSendToReview}
+        onSendToReview={async () => {
+          setIsLoadingAction(true);
+          await SendToAnalysisAction(order.id, addressSelectedId!, distanceKm!);
+          router.push(`/comprar/${order.id}/analise`);
+        }}
+        distanceKm={distanceKm || 0}
         churchName={Company.name}
         churchAddress={Company.address.inLine}
-        distanceKm={distanceKm || 0}
       />
 
       <div className="flex justify-center mt-6">
-        {(deliveryOption === DeliveryOptionEnum.DONATE && isLoadingPartners) ? ('Aguarde, carregando dados...') :
-          (<OrderOnlineButtonAction
+        <OrderOnlineButtonAction
           title='Ir para pagamento'
           isLoading={isLoadingAction}
           handleAction={handleFinalizeAndPay}
-        />)
-        }
+        />
       </div>
     </OrderOnlineContentsBase>
   );
