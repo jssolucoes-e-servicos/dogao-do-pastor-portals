@@ -60,8 +60,11 @@ export default function ErpDashboard() {
 
   if (isLoading && !data) return <DashboardSkeleton />;
 
-  const totalLimit = (data?.totalDogsSold || 0) + (data?.availableDogs || 0);
-  const salesPercentage = totalLimit > 0 ? (data?.totalDogsSold / totalLimit) * 100 : 0;
+  // CORREÇÃO DO ERRO DE TIPAGEM: Garantindo que são números antes do cálculo
+  const totalDogsSold = data?.totalDogsSold ?? 0;
+  const availableDogs = data?.availableDogs ?? 0;
+  const totalLimit = totalDogsSold + availableDogs;
+  const salesPercentage = totalLimit > 0 ? (totalDogsSold / totalLimit) * 100 : 0;
 
   return (
     <div className={`
@@ -69,14 +72,14 @@ export default function ErpDashboard() {
       ${isOffline ? 'grayscale-[0.5]' : ''}
       ${isFullScreen ? 'fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 p-8 overflow-y-auto' : ''}
     `}>
-      {/* Header Atualizado */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
             Dashboard {isFullScreen && <span className="text-orange-600">TV</span>}
           </h2>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-            Edição: <span className="text-slate-600 dark:text-slate-300 italic">{data?.editionName || 'Carregando...'}</span>
+            Edição: <span className="text-slate-600 dark:text-slate-300 italic">{data?.editionName || '---'}</span>
           </p>
         </div>
         
@@ -94,7 +97,6 @@ export default function ErpDashboard() {
             )}
           </div>
 
-          {/* O menu flutuante agora fica aqui, ao lado do status */}
           <DashboardActions 
             data={data} 
             isFullScreen={isFullScreen} 
@@ -131,7 +133,7 @@ export default function ErpDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-baseline justify-between text-slate-900 dark:text-white font-black text-2xl">
-              {data?.totalDogsSold || 0}
+              {totalDogsSold}
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Meta: {totalLimit}</span>
             </div>
             <Progress value={salesPercentage} className="h-1 bg-slate-100 dark:bg-slate-800" />
@@ -190,7 +192,12 @@ export default function ErpDashboard() {
         </Card>
         <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
           <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><Truck className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Tipos de Pedido</CardTitle></CardHeader>
-          <CardContent><DistributionChart data={data?.logisticsStats?.map(l => ({ label: logisticsLabels[l.label] || l.label, value: l.value })) || []} colors={["#3b82f6", "#10b981", "#f59e0b"]} /></CardContent>
+          <CardContent>
+            <DistributionChart 
+              data={data?.logisticsStats?.map(l => ({ label: logisticsLabels[l.label] || l.label, value: l.value })) || []} 
+              colors={["#3b82f6", "#10b981", "#f59e0b"]} 
+            />
+          </CardContent>
         </Card>
         <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
           <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><Heart className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Doações / Parcerias</CardTitle></CardHeader>
@@ -203,4 +210,4 @@ export default function ErpDashboard() {
       </div>
     </div>
   );
-} 
+}
