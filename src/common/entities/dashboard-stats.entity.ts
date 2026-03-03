@@ -1,17 +1,24 @@
-// src/common/entities/dashboard-stats.entity.ts (ou similar)
 export interface DashboardStatsEntity {
+  editionName: string;
+  totalDogsSold: number;
+  availableDogs: number;
   totalRevenue: number;
-  revenuePercentage: number;
   totalDonations: number;
-  donationsPercentage: number;
-  newCustomers: number;
-  customersPercentage: number;
   pendingAnalysis: number;
-  salesHistory: { date: string; amount: number }[];
-  recentDonations: { 
-    id: string; 
-    customer: string; 
-    institution: string; 
-    amount: number 
+  abandonedOrdersCount: number;
+  // Rankings e Estatísticas
+  ingredientsStats: { name: string; count: number }[];
+  paymentMethodsStats: { method: string; count: number }[];
+  rankingCells: { name: string; total: number }[];
+  rankingSellers: { name: string; total: number }[];
+  // Logística e Doações
+  logisticsStats: { label: string; value: number }[];
+  donationsByPartner: { label: string; value: number }[];
+  // Listas
+  recentOrders: {
+    id: string;
+    customer: string;
+    status: string;
+    time: Date;
   }[];
 }
