@@ -1,75 +1,109 @@
 // src/app/erp/page.tsx
+'use client'
+
+import { DashboardSummaryAction } from "@/actions/dashboard/get-summary.action";
+import { RecentDonations } from "@/components/erp/dashboard/recent-donations";
+import { SalesChart } from "@/components/erp/dashboard/sales-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, ShoppingBag, TrendingUp, Users } from "lucide-react";
-export const dynamic = 'force-dynamic'
-export default async function ErpDashboard() {
+import { Skeleton } from "@/components/ui/skeleton";
+import { Heart, RefreshCw, ShoppingBag, TrendingUp, Users } from "lucide-react";
+import useSWR from 'swr';
+
+export default function ErpDashboard() {
+  // SWR para Realtime: Revalida a cada 30 segundos
+  const { data: response, isLoading, isValidating } = useSWR(
+    'dashboard-summary',
+    () => DashboardSummaryAction(),
+    { refreshInterval: 30000, revalidateOnFocus: true }
+  );
+
+  const data = response?.data;
+
+  if (isLoading) return <DashboardSkeleton />;
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 animate-in fade-in duration-700">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-3xl font-black tracking-tight text-slate-900">Dashboard</h2>
+        {isValidating && <RefreshCw className="h-4 w-4 animate-spin text-slate-400" />}
       </div>
 
-      {/* Cards de Métricas Rápidas */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        {/* Card Vendas */}
+        <Card className="border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs font-bold uppercase text-slate-500">Vendas Totais</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold"> carregando ... {/* R$ 12.450,00 */}</div>
-            <p className="text-xs text-muted-foreground">carregando ... {/* +20.1% em relação ao mês passado */}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Doações Totais</CardTitle>
-            <Heart className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">carregando ...{/* 452 Unid. */}</div>
-            <p className="text-xs text-muted-foreground">carregando ...{/* +12% em relação ao mês passado */}</p>
+            <div className="text-2xl font-black">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data?.totalRevenue || 0)}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Card Doações */}
+        <Card className="border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Novos Clientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs font-bold uppercase text-slate-500">Doações</CardTitle>
+            <Heart className="h-4 w-4 text-red-500 fill-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">carregando ...{/* +2350 */}</div>
-            <p className="text-xs text-muted-foreground">carregando ...{/* +180.1% desde a última semana */}</p>
+            <div className="text-2xl font-black">{data?.totalDonations} Unid.</div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Clientes */}
+        <Card className="border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pedidos em Análise</CardTitle>
+            <CardTitle className="text-xs font-bold uppercase text-slate-500">Novos Clientes</CardTitle>
+            <Users className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-black">+{data?.newCustomers}</div>
+          </CardContent>
+        </Card>
+
+        {/* Análise */}
+        <Card className="border-none shadow-sm bg-red-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-bold uppercase text-red-600">Pedidos em Análise</CardTitle>
             <TrendingUp className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">carregando ...{/* 12 */}</div>
-            <p className="text-xs text-muted-foreground">Aguardando aprovação manual</p>
+            <div className="text-2xl font-black text-red-700">{data?.pendingAnalysis}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Placeholder para Gráficos Futuros */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader><CardTitle>Visão Geral de Vendas</CardTitle></CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg m-4">
-            Gráfico de Vendas virá aqui
+        <Card className="col-span-4 border-none shadow-sm">
+          <CardHeader><CardTitle className="font-bold">Evolução de Vendas (7 dias)</CardTitle></CardHeader>
+          <CardContent>
+            <SalesChart data={data?.salesHistory || []} />
           </CardContent>
         </Card>
-        <Card className="col-span-3">
-          <CardHeader><CardTitle>Últimas Doações</CardTitle></CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg m-4">
-            Lista de transações recentes
+        <Card className="col-span-3 border-none shadow-sm">
+          <CardHeader><CardTitle className="font-bold">Últimas Doações</CardTitle></CardHeader>
+          <CardContent>
+            <RecentDonations list={data?.recentDonations || []} />
           </CardContent>
         </Card>
+      </div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-10 w-48" />
+      <div className="grid gap-4 md:grid-cols-4">
+        {[1,2,3,4].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+      </div>
+      <div className="grid gap-4 md:grid-cols-7">
+        <Skeleton className="col-span-4 h-80" />
+        <Skeleton className="col-span-3 h-80" />
       </div>
     </div>
   );

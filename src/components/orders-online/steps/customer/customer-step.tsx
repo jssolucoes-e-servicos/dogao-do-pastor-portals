@@ -29,7 +29,7 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
   });
 
   useEffect(() => {
-    if (order.customer.firstRegister) {
+    if (order.customer.firstRegister === false) {
       setCustomerFormData({
         name: order.customer.name,
         email: order.customer.email || '',

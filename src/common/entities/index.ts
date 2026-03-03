@@ -7,6 +7,7 @@ import { ContributorEntity } from './contributor.entity';
 import { CustomerAddressEntity } from './customer-address.entity';
 import { CustomerEntity } from './customer.entity';
 import { DailyReportSoldsCacheEntity } from './daily-report-solds-cache.entity';
+import { DashboardStatsEntity } from './dashboard-stats.entity';
 import { DeliveryPersonEntity } from './delivery-person.entity';
 import { DeliveryRouteEntity } from './delivery-route.entity';
 import { DeliveryStopEntity } from './delivery-stop.entity';
@@ -29,11 +30,9 @@ export type {
   CellEntity,
   CellNetworkEntity,
   CommandEntity,
-  ContributorEntity,
-  CustomerAddressEntity,
+  ContributorEntity, CustomerAddressEntity,
   CustomerEntity,
-  DailyReportSoldsCacheEntity,
-  DeliveryPersonEntity,
+  DailyReportSoldsCacheEntity, DashboardStatsEntity, DeliveryPersonEntity,
   DeliveryRouteEntity,
   DeliveryStopEntity,
   EditionEntity,
