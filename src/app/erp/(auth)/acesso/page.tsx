@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, Lock, Mail } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Fragment, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -23,6 +23,8 @@ const erpLoginSchema = z.object({
 export default function ErpLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/erp";
 
   const form = useForm<z.infer<typeof erpLoginSchema>>({
     resolver: zodResolver(erpLoginSchema),
@@ -45,7 +47,7 @@ export default function ErpLoginPage() {
     toast.promise(loginAction(), {
       loading: "Autenticando no ERP...",
       success: () => {
-        router.push("/erp")
+        router.push(callbackUrl)
         return "Acesso autorizado. Bem-vindo!"
       },
       error: (err) => {

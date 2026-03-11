@@ -24,6 +24,7 @@ import {
   Building2,
   ChevronRight,
   LayoutDashboard,
+  ShoppingCart,
   Users,
   UsersRound
 } from "lucide-react"
@@ -34,6 +35,16 @@ const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
   { title: "Clientes", icon: Users, url: "/erp/clientes" },
   { title: "Entidades Parceiras", icon: Building2, url: "/erp/parceiros" },
+
+  {
+    title: "Pedidos",
+    icon: ShoppingCart,
+    items: [
+      { title: "Listar", url: "/erp/pedidos" },
+      { title: "Pedidos em Análise", url: "/erp/pedidos/em-analise" },
+      { title: "Curadoria de Doações", url: "/erp/pedidos/doacoes-curadoria" },
+    ],
+  },
 
   {
     title: "Cadastros Auxiliares",

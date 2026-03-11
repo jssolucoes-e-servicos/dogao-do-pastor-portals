@@ -31,7 +31,7 @@ Promise<IResponse> => {
     // Salva o Token
     cookieStore.set("ddp-ctb-00", data.access_token, { 
         path: "/",
-        maxAge: 60 * 60 * 24, // 1 dia
+        maxAge: 60 * 60 * 24 * 7, // 7 dias
         httpOnly: true, 
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax"
@@ -40,7 +40,7 @@ Promise<IResponse> => {
     // Salva o Usuário
     cookieStore.set("ddp-ctb-01", JSON.stringify(data.user), { 
         path: "/",
-        maxAge: 60 * 60 * 24,
+        maxAge: 60 * 60 * 24 * 7,
         httpOnly: false, // Permitir leitura no client para UI
         secure: process.env.NODE_ENV === "production"
     });

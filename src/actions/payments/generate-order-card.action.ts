@@ -1,4 +1,4 @@
-// src/actions/payments/generate-order-pix.action.ts
+// src/actions/payments/generate-order-card.action.ts
 "use server";
 
 import { PaymentEntity } from "@/common/entities";

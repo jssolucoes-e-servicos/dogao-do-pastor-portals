@@ -104,7 +104,12 @@ export function PartnerUpdateForm({ partnerId, initialData, isEdit = false, isAd
         delete payload.logo; // Remove para evitar o erro "property logo should not exist"
       }
 
-      await UpsertPartnerAction(isEdit, partnerId, payload);
+      const upserted = await UpsertPartnerAction(isEdit, partnerId, payload);
+
+      if (!upserted.success || !upserted.data)
+      {
+        throw new Error(upserted.error!);
+      }
       
       toast.success(isEdit ? "Perfil atualizado!" : "Cadastro realizado com sucesso!");
       

@@ -15,7 +15,7 @@ export const WhatsappIsValidAction = async (phone: string): Promise<IResponse> =
     if (Array.isArray(response) && response.length > 0) {
       return {
         success: true,
-        message: response[0].exists,
+        message: `${response[0].exists}`,
       }
     }
     return {
