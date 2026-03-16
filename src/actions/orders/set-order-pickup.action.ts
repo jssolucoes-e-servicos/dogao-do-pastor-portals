@@ -7,7 +7,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const SetOrderPickupAction = async (orderId: string): Promise<IResponseObject<OrderEntity>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/set-pickup`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/orders/set-pickup`, {
       method: 'POST',
       body: JSON.stringify({
         orderId,

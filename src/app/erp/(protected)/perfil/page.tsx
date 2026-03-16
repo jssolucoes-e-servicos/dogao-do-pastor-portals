@@ -3,6 +3,7 @@
 import { ContributorsByIdAction } from "@/actions/contributors/find-by-id.action";
 import { ProfileDetails } from "@/components/erp/profile/profile-details";
 import { ProfileHeader } from "@/components/erp/profile/profile-header";
+import { ProfilePermissions } from "@/components/erp/profile/profile-permissions";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -28,24 +29,26 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-8 max-w-5xl mx-auto">
+    <div className="flex flex-col gap-8 p-4 md:p-8 max-w-6xl mx-auto">
       <ProfileHeader contributor={contributor} />
       
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="md:col-span-2">
+      <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <div className="md:col-span-2 lg:col-span-3 space-y-6">
           <ProfileDetails contributor={contributor} />
-        </div>
-        
-        <div className="flex flex-col gap-6">
-          {/* Espaço para cards de resumo de conexões ou status */}
+          
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-5 bg-card shadow-sm">
             <h4 className="text-[10px] font-black uppercase text-muted-foreground mb-4">Vínculos Ativos</h4>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <BadgeLink label="Vendedor" active={contributor.sellers && contributor.sellers.length > 0 ? true : false} />
+              <BadgeLink label="Supervisor de Rede" active={contributor.cellNetworks && contributor.cellNetworks.length > 0 ? true : false} />
               <BadgeLink label="Líder de Célula" active={contributor.cells && contributor.cells.length > 0 ? true : false} />
               <BadgeLink label="Entregador" active={contributor.deliveryPersons && contributor.deliveryPersons.length > 0 ? true : false} />
             </div>
           </div>
+        </div>
+        
+        <div className="md:col-span-1 lg:col-span-1">
+          <ProfilePermissions contributor={contributor} />
         </div>
       </div>
     </div>

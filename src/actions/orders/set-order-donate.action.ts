@@ -20,7 +20,7 @@ export const SetOrderDonateAction = async (
       dataSend.observations = observations.trim();
     }
     console.log(dataSend);
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/set-donation`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/orders/set-donation`, {
       method: 'POST',
       body: JSON.stringify(dataSend)
     });

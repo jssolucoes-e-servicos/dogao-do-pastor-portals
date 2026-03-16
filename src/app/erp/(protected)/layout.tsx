@@ -17,15 +17,22 @@ export default async function ErpLayout({ children }: { children: React.ReactNod
 
   let user;
   try {
-    user = JSON.parse(decodeURIComponent(userDataCookie));
+    let rawData = userDataCookie;
+    try {
+      rawData = decodeURIComponent(userDataCookie);
+    } catch (e) {
+      // Ignora erro de decode e tenta parsear direto
+    }
+    user = JSON.parse(rawData);
   } catch (e) {
-    redirect("/erp/acesso"); // Se o cookie estiver corrompido, redireciona
+    console.error("Erro ao parsear cookie no layout:", e);
+    redirect("/erp/acesso");
   }
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <SidebarProvider>
-        <ErpSidebar />
+        <ErpSidebar user={user} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 justify-between bg-background/95 backdrop-blur">
             <div className="flex items-center gap-2">

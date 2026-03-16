@@ -6,7 +6,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const OrdersSaleInitAction = async (cpf:string,sellerTag:string): Promise<IResponseObject<IOrderInit>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/init`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/orders/init`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -15,7 +15,7 @@ export const OrdersSaleInitAction = async (cpf:string,sellerTag:string): Promise
     });
 
     return {
-      success: false,
+      success: true,
       data: data
     };
   } catch (error) {

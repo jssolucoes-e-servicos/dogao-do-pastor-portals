@@ -6,7 +6,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const VerifyLinkAction = async (id: string): Promise<IResponseObject<IPartnerVerifyLinkResponse>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/verify-link/${id}`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/partners/verify-link/${id}`, {
       cache: "no-store"
     })
     return {

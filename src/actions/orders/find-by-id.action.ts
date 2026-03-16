@@ -7,7 +7,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const findOrdersByIdAction = async (id: string): Promise<IResponseObject<OrderEntity>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/${id}`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/orders/${id}`, {
       cache: "no-store"
     })
     return {

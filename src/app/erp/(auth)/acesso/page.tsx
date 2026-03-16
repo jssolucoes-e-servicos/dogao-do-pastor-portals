@@ -47,7 +47,8 @@ export default function ErpLoginPage() {
     toast.promise(loginAction(), {
       loading: "Autenticando no ERP...",
       success: () => {
-        router.push(callbackUrl)
+        // Usa window.location para garantir reload total da página e cookies
+        window.location.href = callbackUrl
         return "Acesso autorizado. Bem-vindo!"
       },
       error: (err) => {

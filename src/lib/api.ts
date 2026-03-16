@@ -1,14 +1,14 @@
 import { FetchCtx } from "@/common/enums";
 import Cookies from "js-cookie";
 
-const getCookiePrefix = (ctx: FetchCtx): string => {
-  const data: Partial<Record<FetchCtx, string>> = {
+const getCookiePrefix = (ctx: FetchCtx): string | null => {
+  const data: Record<string, string | null> = {
     [FetchCtx.CUSTOMER]: 'ddp-ctm-00',
     [FetchCtx.PARTNER]: 'ddp-prt-00',
     [FetchCtx.ERP]: 'ddp-ctb-00',
-    [FetchCtx.PUBLIC]: 'error',
+    [FetchCtx.PUBLIC]: null,
   };
-  return data[ctx]!;
+  return data[ctx] ?? null;
 }
 
 const getLoginRoute = (ctx: FetchCtx): string => {
@@ -36,13 +36,14 @@ async function fetchApi(
   let token: string | undefined = "";
 
   // 1. RECUPERAÇÃO DO TOKEN (Safe Server/Client)
-  if (isServer) {
-    // Importação dinâmica para evitar que o Webpack tente levar next/headers para o browser
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
-    token = cookieStore.get(cookiePrefix)?.value;
-  } else {
-    token = Cookies.get(cookiePrefix);
+  if (cookiePrefix) {
+    if (isServer) {
+      const { cookies } = await import("next/headers");
+      const cookieStore = await cookies();
+      token = cookieStore.get(cookiePrefix)?.value;
+    } else {
+      token = Cookies.get(cookiePrefix as string);
+    }
   }
 
   const headers: Record<string, string> = {
@@ -70,7 +71,7 @@ async function fetchApi(
     if (!response.ok) {
       // 4. LÓGICA DE EXPIRAÇÃO (Apenas Cliente)
       if (response.status === 401 && !isServer) {
-        Cookies.remove(cookiePrefix);
+        if (cookiePrefix) Cookies.remove(cookiePrefix);
         Cookies.remove(ctx === FetchCtx.PARTNER ? 'ddp-prt-01' : 'ddp-ctm-01');
         window.location.href = loginRoute;
       }

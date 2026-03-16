@@ -7,7 +7,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const OrderUpStepAction = async (order: OrderEntity): Promise<IResponseObject<OrderEntity>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/up-step/${order.id}`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/orders/up-step/${order.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

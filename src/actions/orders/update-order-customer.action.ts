@@ -6,7 +6,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const UpdateOrderCustomerAction = async (orderId: string, values: { name: string, phone: string }) : Promise<IResponse> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/orders/${orderId}/sync-customer`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/orders/${orderId}/sync-customer`, {
       method: 'PATCH',
       body: JSON.stringify(values)
     });

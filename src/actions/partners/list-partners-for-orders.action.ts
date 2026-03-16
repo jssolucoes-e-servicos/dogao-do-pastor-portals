@@ -7,7 +7,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const ListPartnersForOrdersAction = async (): Promise<IResponseObject<PartnerEntity[]>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/partners/for-orders`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/partners/for-orders`, {
       cache: "no-store"
     })
     return {

@@ -11,7 +11,8 @@ export const UpsertPartnerAction = async (
   payload: unknown): Promise<IResponseObject<PartnerEntity>> => {
   try {
     const endpoint = isEdit ? `/partners/${partnerId}` : `/partners/register/${partnerId}`;
-    const data = await fetchApi(FetchCtx.CUSTOMER, endpoint, {
+    const context = isEdit ? FetchCtx.PARTNER : FetchCtx.PUBLIC;
+    const data = await fetchApi(context, endpoint, {
       method: isEdit ? 'PATCH' : 'POST',
       headers: {
         'Content-Type': 'application/json',

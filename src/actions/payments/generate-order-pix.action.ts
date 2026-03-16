@@ -7,7 +7,7 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export const GenerateOrderPixAction = async (orderId: string): Promise<IResponseObject<PaymentEntity>> => {
   try {
-    const data = await fetchApi(FetchCtx.CUSTOMER, `/payments/create-order-pix`, {
+    const data = await fetchApi(FetchCtx.PUBLIC, `/payments/create-order-pix`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
