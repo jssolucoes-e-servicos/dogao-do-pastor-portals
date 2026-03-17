@@ -8,6 +8,7 @@ import { IngredientsChart } from "@/components/erp/dashboard/ingredients-chart";
 import { RankingList } from "@/components/erp/dashboard/ranking-list";
 import { RecentDonations } from "@/components/erp/dashboard/recent-donations";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -16,6 +17,7 @@ import {
   PackageCheck,
   PieChart as PieIcon,
   RefreshCw, ShoppingBag,
+  Shield,
   Truck,
   UtensilsCrossed,
   WifiOff
@@ -23,6 +25,7 @@ import {
 import { usePermissions } from "@/hooks/use-permissions";
 import { useEffect, useState } from "react";
 import useSWR from 'swr';
+import Link from "next/link";
 
 const logisticsLabels: Record<string, string> = {
   DONATE: 'Doação',
@@ -43,7 +46,15 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
     'dashboard-summary',
     async () => {
       const res = await DashboardSummaryAction();
-      if (!res || !res.success) throw new Error("Offline");
+      if (!res || !res.success) {
+        if (res?.error?.includes("403") || res?.error?.includes("negado")) {
+          return { success: false, error: "Acesso Negado", code: 403 };
+        }
+        if (res?.error?.includes("404") || res?.error?.includes("edição")) {
+          return { success: false, error: "Nenhuma edição ativa encontrada", code: 404 };
+        }
+        throw new Error("Offline");
+      }
       return res;
     },
     { 
@@ -53,7 +64,7 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
     }
   );
 
-  const data = response?.data;
+  const data = (response as any)?.data;
   const isOffline = !!error;
 
   useEffect(() => {
@@ -71,6 +82,29 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
   const canSeeOperations = mounted && hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'RECEPTION', 'MANAGER', 'LEADER', 'EXPEDITION']);
 
   if ((isLoading || (!initialUser && permissionsLoading) || !mounted) && !data) return <DashboardSkeleton />;
+
+  if (response?.success === false) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+        <div className="h-16 w-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+           {(response as any).code === 403 ? <Shield className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
+        </div>
+        <div>
+          <h3 className="text-xl font-black uppercase italic text-slate-900 dark:text-white">{response.error}</h3>
+          <p className="text-[10px] font-bold uppercase text-slate-400 max-w-xs mx-auto mt-2">
+            {(response as any).code === 403 
+              ? "Seu perfil não possui permissão para visualizar as métricas globais do Dashboard." 
+              : "É necessário iniciar uma nova edição no sistema para começar a coletar dados."}
+          </p>
+        </div>
+        {(response as any).code === 404 && (
+          <Link href="/erp/configuracoes">
+            <Button className="h-10 rounded-xl bg-orange-600 font-bold uppercase text-[9px] tracking-widest">Configurar Edição</Button>
+          </Link>
+        )}
+      </div>
+    );
+  }
 
   const totalDogsSold = data?.totalDogsSold ?? 0;
   const availableDogs = data?.availableDogs ?? 0;

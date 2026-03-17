@@ -4,6 +4,7 @@
 import { CellEntity, CellNetworkEntity, ContributorEntity, DeliveryPersonEntity, SellerEntity } from "@/common/entities";
 import { NumbersHelper } from "@/common/helpers/numbers-helper";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Crown,
@@ -58,21 +59,44 @@ export function ContributorViewer({ contributor }: Props) {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800 opacity-80 grayscale-[0.2]">
-          <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b p-5">
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+          <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b p-5 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-black uppercase flex items-center gap-2 text-slate-700 dark:text-slate-300">
-              <Lock className="h-4 w-4" /> Permissões de Módulo
+              <Lock className="h-4 w-4" /> Acesso & Perfis
             </CardTitle>
+            <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg hover:bg-white dark:hover:bg-slate-800">
+              <Link href={`/erp/colaboradores/${contributor.id}/permissoes`}>
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </Button>
           </CardHeader>
-          <CardContent className="pt-5">
-            <p className="text-[11px] text-muted-foreground italic mb-4">
-              Módulos que o usuário pode acessar no ERP. (Gestão em breve)
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="uppercase text-[9px] font-bold">Dashboard</Badge>
-              <Badge variant="outline" className="uppercase text-[9px] font-bold">Vendas</Badge>
-              <Badge variant="outline" className="uppercase text-[9px] font-bold">Expedição</Badge>
-              <Badge variant="outline" className="uppercase text-[9px] font-bold">Financeiro</Badge>
+          <CardContent className="pt-5 space-y-4">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Perfis Ativos</label>
+              <div className="flex flex-wrap gap-2">
+                {contributor.userRoles?.filter((ur: any) => ur.active).map((ur: any) => (
+                  <Badge key={ur.id} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-none uppercase text-[9px] font-black px-3">
+                    {ur.role.name}
+                  </Badge>
+                ))}
+                {(!contributor.userRoles || contributor.userRoles.filter((ur: any) => ur.active).length === 0) && (
+                   <span className="text-[10px] text-muted-foreground italic">Nenhum perfil</span>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Módulos Customizados</label>
+              <div className="flex flex-wrap gap-2">
+                {contributor.permissions?.filter((p: any) => p.access).map((p: any) => (
+                  <Badge key={p.id} variant="outline" className="uppercase text-[9px] font-bold border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400">
+                    {p.module.name}
+                  </Badge>
+                ))}
+                {(!contributor.permissions || contributor.permissions.filter((p: any) => p.access).length === 0) && (
+                   <span className="text-[10px] text-muted-foreground italic">Nenhuma customização</span>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

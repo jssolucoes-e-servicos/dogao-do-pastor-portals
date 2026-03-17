@@ -91,10 +91,10 @@ export function DonationAnalysisModal({ order, isOpen, onClose }: any) {
     setLoading(true);
     try {
       const resInvite = await GenerateInviteAction();
-      if (!resInvite?.success) throw new Error(resInvite?.message);
+      if (!resInvite?.success) throw new Error(resInvite?.error);
 
-      const url = `${window.location.origin}/parceiros/cadastro/${resInvite.data.id}`;
-      const logTag = `\n[PARTNER_ID]: ${resInvite.data.id} [FLAG]: CONVITE_GERADO`;
+      const url = `${window.location.origin}/parceiros/cadastro/${resInvite.data!.id}`;
+      const logTag = `\n[PARTNER_ID]: ${resInvite.data!.id} [FLAG]: CONVITE_GERADO`;
       
       const resOrder = await UpdateOrderObservationsAction(order.id, (order.observations || "") + logTag);
       if (!resOrder?.success) throw new Error("Falha ao vincular pedido.");

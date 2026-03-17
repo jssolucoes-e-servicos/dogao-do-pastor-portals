@@ -20,81 +20,97 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { usePermissions } from "@/hooks/use-permissions"
 import {
   Building2,
   ChevronRight,
+  Heart,
   LayoutDashboard,
+  PackageCheck,
+  Settings,
   ShoppingCart,
+  Truck,
   Users,
   UsersRound
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { usePermissions } from "@/hooks/use-permissions"
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
-  { 
-    title: "Clientes", 
-    icon: Users, 
-    url: "/erp/clientes", 
-    roles: ["IT", "ADMIN", "FINANCE", "RECEPTION"] 
-  },
-  { 
-    title: "Entities & Partners", 
-    icon: Building2, 
-    url: "/erp/parceiros", 
-    roles: ["IT", "ADMIN", "FINANCE"] 
-  },
-
+  
   {
-    title: "Orders",
+    title: "Vendas & Clientes",
     icon: ShoppingCart,
     roles: ["IT", "ADMIN", "FINANCE", "SELLER", "RECEPTION"],
     items: [
-      { title: "List All", url: "/erp/pedidos" },
-      { 
-        title: "Orders in Review", 
-        url: "/erp/pedidos/em-analise", 
-        roles: ["IT", "ADMIN", "RECEPTION"] 
-      },
-      { 
-        title: "Donation Curation", 
-        url: "/erp/pedidos/doacoes-curadoria", 
-        roles: ["IT", "ADMIN", "FINANCE"] 
-      },
+      { title: "PDV (Ponto de Venda)", url: "/erp/pdv" },
+      { title: "Todos os Pedidos", url: "/erp/pedidos" },
+      { title: "Clientes", url: "/erp/clientes", roles: ["IT", "ADMIN", "RECEPTION"] },
+      { title: "Em análise", url: "/erp/pedidos/em-analise", roles: ["IT", "ADMIN", "RECEPTION"] },
+    ],
+  },
+  
+  {
+    title: "Doações",
+    icon: Heart,
+    roles: ["IT", "ADMIN", "FINANCE", "RECEPTION"],
+    items: [
+      { title: "Painel de Doações", url: "/erp/doacoes" },
+      { title: "Curadoria", url: "/erp/pedidos/doacoes-curadoria", roles: ["IT", "ADMIN", "FINANCE"] },
+      { title: "Entidades Parceiras", url: "/erp/parceiros", roles: ["IT", "ADMIN", "FINANCE"] },
     ],
   },
 
   {
-    title: "Main Registries",
+    title: "Operação Retiradas",
+    icon: PackageCheck,
+    roles: ["IT", "ADMIN", "RECEPTION", "EXPEDITION"],
+    items: [
+      { title: "Fila de Retiradas", url: "/erp/retiradas/fila" },
+      { title: "Comandas", url: "/erp/comandas" },
+      { title: "Produção (Cozinha)", url: "/erp/producao/cozinha" },
+    ],
+  },
+
+  {
+    title: "Logística Entregas",
+    icon: Truck,
+    roles: ["IT", "ADMIN", "EXPEDITION", "DELIVERY"],
+    items: [
+      { title: "Fila de Despacho", url: "/erp/entregas/fila" },
+      { title: "Gerenciar Rotas", url: "/erp/entregas/rotas" },
+      { title: "Rastreio Real-time", url: "/erp/entregas/rastreio" },
+      { title: "Ocorrências", url: "/erp/entregas/chamados" },
+    ],
+  },
+
+  {
+    title: "Gestão Administrativa",
     icon: UsersRound,
     roles: ["IT", "ADMIN", "MANAGER", "LEADER"],
     items: [
-      { 
-        title: "Contributors", 
-        url: "/erp/colaboradores", 
-        roles: ["IT", "ADMIN"] 
-      },
-      { title: "Sellers", url: "/erp/vendedores" },
-      { 
-        title: "Cells", 
-        url: "/erp/celulas", 
-        roles: ["IT", "ADMIN", "MANAGER", "LEADER"] 
-      },
-      { 
-        title: "Cell Networks", 
-        url: "/erp/redes-de-celulas", 
-        roles: ["IT", "ADMIN", "MANAGER"] 
-      },
+      { title: "Colaboradores", url: "/erp/colaboradores", roles: ["IT", "ADMIN"] },
+      { title: "Gestão de Perfis", url: "/erp/perfis", roles: ["IT", "ADMIN"] },
+      { title: "Permissões & Acessos", url: "/erp/configuracoes/permissoes", roles: ["IT"] },
+      { title: "Vendedores", url: "/erp/vendedores" },
+      { title: "Células", url: "/erp/celulas" },
+      { title: "Redes de células", url: "/erp/redes-de-celulas", roles: ["IT", "ADMIN", "MANAGER"] },
     ],
   },
+
+  {
+    title: "Configurações",
+    icon: Settings,
+    url: "/erp/configuracoes",
+    roles: ["IT", "ADMIN"]
+  }
 ]
 
 export function ErpSidebar({ user: initialUser }: { user?: any }) {
   const { state } = useSidebar()
-  const { hasAnyRole, isIT, loading, user } = usePermissions(initialUser)
+  const { hasAnyRole, isIT, isAdmin, loading, user } = usePermissions(initialUser)
   const isCollapsed = state === "collapsed"
   const [mounted, setMounted] = useState(false)
 
@@ -104,8 +120,8 @@ export function ErpSidebar({ user: initialUser }: { user?: any }) {
 
   if ((loading && !initialUser) || !mounted) return null;
 
-  const isMaster = isIT();
-  
+  const isMaster = isIT() || isAdmin();
+
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader className="h-16 flex items-center justify-center border-b transition-all duration-300">
@@ -124,7 +140,7 @@ export function ErpSidebar({ user: initialUser }: { user?: any }) {
 
           {!isCollapsed && (
             <span className="tracking-tighter uppercase font-black text-orange-600 whitespace-nowrap animate-in fade-in duration-500">
-              SISTEMA ERP {isMaster && " (IT)"}
+              SISTEMA ERP
             </span>
           )}
         </Link>
@@ -156,7 +172,7 @@ export function ErpSidebar({ user: initialUser }: { user?: any }) {
                             // TI vê tudo. Outros perfis precisam da role ou o subitem não ter roles.
                             const canSeeSub = isMaster || !sub.roles || hasAnyRole(sub.roles);
                             if (!canSeeSub) return null;
-                            
+
                             return (
                               <SidebarMenuSubItem key={sub.title}>
                                 <SidebarMenuSubButton asChild>

@@ -7,12 +7,12 @@ import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, Lock, Mail } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Fragment, useState } from "react"
+import { Suspense, Fragment, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import * as z from "zod"
 export const dynamic = 'force-dynamic'
-// Importação fictícia da action de login do ERP - ajuste conforme seu arquivo real
+
 import { AuthContributorLoginAction } from "@/actions/auth/contributor-login.action"
 
 const erpLoginSchema = z.object({
@@ -20,7 +20,7 @@ const erpLoginSchema = z.object({
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
 })
 
-export default function ErpLoginPage() {
+function ErpLoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams();
@@ -51,7 +51,7 @@ export default function ErpLoginPage() {
         window.location.href = callbackUrl
         return "Acesso autorizado. Bem-vindo!"
       },
-      error: (err) => {
+      error: (err: any) => {
         setIsLoading(false)
         return err.message || "Falha na autenticação."
       },
@@ -125,5 +125,13 @@ export default function ErpLoginPage() {
       </form>
     </Form>
   </Fragment>
+  )
+}
+
+export default function ErpLoginPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-orange-600" /></div>}>
+      <ErpLoginForm />
+    </Suspense>
   )
 }

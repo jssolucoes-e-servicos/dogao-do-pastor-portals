@@ -6,7 +6,8 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 
 export async function DonationsCuratoryPaginateAction(
   page = 1, 
-  search = ""
+  search = "",
+  includeAssigned?: string
 ): Promise<IResponseObject<IPaginatedData<OrderEntity>>> {
   try {
     const params = new URLSearchParams({
@@ -15,6 +16,7 @@ export async function DonationsCuratoryPaginateAction(
     });
 
     if (search) params.append("search", search);
+    if (includeAssigned) params.append("includeAssigned", includeAssigned);
     
     // Usando o seu fetchApi configurado para o Contexto ERP
     const data = await fetchApi(FetchCtx.ERP, `/orders/donations-analysis?${params.toString()}`, {

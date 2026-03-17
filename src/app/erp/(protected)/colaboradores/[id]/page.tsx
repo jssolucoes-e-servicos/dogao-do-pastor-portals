@@ -2,7 +2,7 @@
 import { ContributorsByIdAction } from "@/actions/contributors/find-by-id.action";
 import { ContributorViewer } from "@/components/erp/viewer/contributor-viewer";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit } from "lucide-react";
+import { ArrowLeft, Edit, Lock } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -36,12 +36,20 @@ export default async function ContributorDetailsPage({ params }: Props) {
           </div>
         </div>
 
-        <Button className="bg-orange-600 hover:bg-orange-700 font-bold uppercase gap-2" asChild>
-          <Link href={`/erp/colaboradores/${id}/editar`}>
-            <Edit className="h-4 w-4" />
-            Editar Dados
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="font-bold border-slate-200 dark:border-slate-800 uppercase gap-2 rounded-xl h-11" asChild>
+            <Link href={`/erp/colaboradores/${id}/permissoes`}>
+              <Lock className="h-4 w-4 text-orange-600" />
+              Gestão de Acessos
+            </Link>
+          </Button>
+          <Button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white font-bold uppercase gap-2 rounded-xl h-11 shadow-lg shadow-slate-900/10" asChild>
+            <Link href={`/erp/colaboradores/${id}/editar`}>
+              <Edit className="h-4 w-4" />
+              Editar Dados
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <ContributorViewer contributor={data} />

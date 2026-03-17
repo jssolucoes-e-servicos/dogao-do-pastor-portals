@@ -1,5 +1,8 @@
 'use client';
 
+import { GetPartnerStatsAction } from '@/actions/partners/get-stats.action';
+import { usePermissions } from '@/hooks/use-permissions';
+import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Dog, History, QrCode, ShoppingBag } from 'lucide-react';
@@ -7,6 +10,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ReceiptModal } from './components/receipt-modal';
 import { WithdrawalModal } from './components/withdrawal-modal';
+
 export const dynamic = 'force-dynamic'
 interface WithdrawalRecord {
   id: string;
@@ -17,15 +21,22 @@ interface WithdrawalRecord {
 }
 
 export default function DoacoesPage() {
+  const { user } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalRecord | null>(null);
   
-  const [stats, setStats] = useState({
-    totalRecebido: 100,
+  const { data: statsRes, mutate: mutateStats } = useSWR(
+    user?.id ? ['partner-stats', user.id] : null,
+    ([, id]) => GetPartnerStatsAction(id as string),
+    { refreshInterval: 10000 }
+  );
+
+  const stats = statsRes?.data || {
+    totalRecebido: 0,
     jaRetirados: 0,
-    disponiveis: 100
-  });
+    disponiveis: 0
+  };
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
 
@@ -51,11 +62,7 @@ export default function DoacoesPage() {
     };
 
     setWithdrawals([newRecord, ...withdrawals]);
-    setStats(prev => ({
-      ...prev,
-      jaRetirados: prev.jaRetirados + totalQty,
-      disponiveis: prev.disponiveis - totalQty
-    }));
+    mutateStats();
 
     toast.success(`Agendamento realizado para às ${pickupTime}!`);
   };
