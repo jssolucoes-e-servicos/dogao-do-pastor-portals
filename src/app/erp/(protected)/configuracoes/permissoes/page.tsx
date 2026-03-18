@@ -1,12 +1,8 @@
 'use client';
 
-import { ContributorsByIdAction } from "@/actions/contributors/find-by-id.action";
-import { ContributorLinkRoleAction } from "@/actions/contributors/link-role.action";
-import { ContributorSetPermissionAction } from "@/actions/contributors/set-permission.action";
-import { ContributorUnlinkRoleAction } from "@/actions/contributors/unlink-role.action";
+import { RoleSetPermissionAction } from "@/actions/roles/set-permission.action";
 import { ModulesListAllAction } from "@/actions/modules/list-all.action";
 import { RolesPaginateAction } from "@/actions/roles/paginate.action";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,30 +21,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, ShieldCheck, ShieldAlert, UserPlus, Trash2, Save, Fingerprint } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Fingerprint } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
-export default function ColaboradorPermissoesPage() {
-  const { id } = useParams() as { id: string };
+export default function PerfisPermissoesPage() {
   const [mounted, setMounted] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const { data: contributorRes, mutate: mutateContributor } = useSWR(
-    mounted ? [`contributor`, id] : null,
-    () => ContributorsByIdAction(id)
-  );
-
   const { data: rolesRes } = useSWR(
     mounted ? [`roles-all`] : null,
-    () => RolesPaginateAction(1, "") // No search, page 1 (up to 10 for now)
+    () => RolesPaginateAction(1, "") // Buscar lista de perfis
   );
 
   const { data: modulesRes } = useSWR(
@@ -56,42 +45,18 @@ export default function ColaboradorPermissoesPage() {
     () => ModulesListAllAction()
   );
 
-  const contributor = contributorRes?.data;
   const allRoles = rolesRes?.data?.data || [];
   const allModules = modulesRes?.data || [];
 
-  const handleLinkRole = async () => {
-    if (!selectedRole) return;
-    try {
-      const res = await ContributorLinkRoleAction(id, selectedRole);
-      if (res.success) {
-        toast.success("Perfil vinculado");
-        mutateContributor();
-      } else {
-        toast.error(res.error || "Erro ao vincular");
-      }
-    } catch (err) {
-      toast.error("Erro interno");
-    }
-  };
+  // Pega o perfil selecionado
+  const selectedRole = allRoles.find((r: any) => r.id === selectedRoleId);
 
-  const handleUnlinkRole = async (roleId: string) => {
-    try {
-      const res = await ContributorUnlinkRoleAction(id, roleId);
-      if (res.success) {
-        toast.success("Perfil removido");
-        mutateContributor();
-      } else {
-        toast.error(res.error || "Erro ao remover");
-      }
-    } catch (err) {
-      toast.error("Erro interno");
-    }
-  };
-
+  // Força re-render caso precisemos refazer request mas como swr gerencia cache...
   const handleTogglePermission = async (modId: string, field: string, value: boolean) => {
+     if (!selectedRole) return;
+
      // Encontrar permissão atual ou criar template
-     const currentPerm = contributor?.permissions?.find((p: any) => p.moduleId === modId) || {
+     const currentPerm = selectedRole?.permissions?.find((p: any) => p.moduleId === modId) || {
         access: false, create: false, update: false, delete: false, report: false
      };
 
@@ -101,10 +66,21 @@ export default function ColaboradorPermissoesPage() {
      };
 
      try {
-        const res = await ContributorSetPermissionAction(id, modId, newPerms);
+        const res = await RoleSetPermissionAction(selectedRoleId, modId, newPerms);
         if (res.success) {
            toast.success("Permissão atualizada");
-           mutateContributor();
+           
+           // Evitar tela piscando atualizando state local antes do SWR refatch real
+           const roleIndex = allRoles.findIndex((r: any) => r.id === selectedRoleId);
+           if (roleIndex !== -1) {
+              const permIndex = allRoles[roleIndex].permissions?.findIndex((p: any) => p.moduleId === modId);
+              if (permIndex !== undefined && permIndex !== -1) {
+                  allRoles[roleIndex].permissions[permIndex] = newPerms as any;
+              } else {
+                  if (!allRoles[roleIndex].permissions) allRoles[roleIndex].permissions = [];
+                  allRoles[roleIndex].permissions.push({ moduleId: modId, ...newPerms } as any);
+              }
+           }
         } else {
            toast.error(res.error || "Erro ao salvar");
         }
@@ -113,101 +89,64 @@ export default function ColaboradorPermissoesPage() {
      }
   };
 
-  if (!mounted || !contributor) return null;
+  if (!mounted) return null;
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-700">
+    <div className="flex flex-col gap-8 animate-in fade-in duration-700 p-4 md:p-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
            <Button variant="outline" size="icon" asChild className="rounded-2xl h-12 w-12 border-slate-200 dark:border-slate-800">
-            <Link href={`/erp/colaboradores/${id}`}>
+            <Link href={`/erp/configuracoes`}>
               <ArrowLeft className="h-4 w-4 text-slate-400" />
             </Link>
           </Button>
           <div>
             <h1 className="text-3xl font-black tracking-tighter uppercase italic text-slate-900 dark:text-white leading-none">
-              Permissões de <span className="text-orange-600">{contributor.name}</span>
+              Gestão de <span className="text-orange-600">Acessos</span>
             </h1>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-1">
-              Customização de Acesso • Individual & Perfis
+              Permissões Padrão dos Perfis (Roles)
             </p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Lado Esquerdo: Perfis Vinculados */}
         <div className="xl:col-span-4 space-y-8">
           <Card className="border-none shadow-sm bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
             <CardHeader className="p-8 pb-4">
               <CardTitle className="text-lg font-black uppercase text-slate-900 dark:text-white italic flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-emerald-500" /> Perfis Ativos
+                <ShieldCheck className="h-5 w-5 text-emerald-500" /> Selecionar Perfil
               </CardTitle>
               <CardDescription className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Determine os papéis do colaborador
+                Escolha o papel para ver e editar permissões
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-8 pt-4 space-y-6">
-              <div className="flex gap-2">
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger className="h-12 rounded-2xl border-none bg-slate-50 dark:bg-slate-950 font-bold text-[10px] uppercase tracking-widest px-6 flex-1">
-                    <SelectValue placeholder="SELECIONE UM PERFIL" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-none shadow-2xl bg-white dark:bg-slate-950">
-                    {allRoles
-                      .filter(r => !contributor.userRoles?.some((ur: any) => ur.roleId === r.id))
-                      .map(role => (
-                      <SelectItem key={role.id} value={role.id} className="font-bold text-[10px] uppercase tracking-widest py-3">
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={handleLinkRole}
-                  disabled={!selectedRole}
-                  className="h-12 w-12 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-all p-0 shadow-lg shadow-slate-900/10"
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {contributor.userRoles?.filter((ur: any) => ur.active).map((ur: any) => (
-                  <div key={ur.id} className="flex items-center justify-between p-4 rounded-3xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/50 group">
-                    <div className="flex flex-col">
-                      <span className="font-black text-[11px] uppercase italic text-slate-900 dark:text-white">{ur.role.name}</span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Atribuído em {new Date(ur.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleUnlinkRole(ur.roleId)}
-                      className="h-9 w-9 rounded-xl hover:bg-red-50 dark:hover:bg-red-950 text-red-400 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
-                {(!contributor.userRoles || contributor.userRoles.filter((ur: any) => ur.active).length === 0) && (
-                   <div className="py-12 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 italic">Nenhum perfil vinculado</p>
-                   </div>
-                )}
-              </div>
+            <CardContent className="p-8 pt-4">
+              <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
+                <SelectTrigger className="h-12 rounded-2xl border-none bg-slate-50 dark:bg-slate-950 font-bold text-[10px] uppercase tracking-widest px-6 w-full">
+                  <SelectValue placeholder="SELECIONE UM PERFIL" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-none shadow-2xl bg-white dark:bg-slate-950">
+                  {allRoles.map((role: any) => (
+                    <SelectItem key={role.id} value={role.id} className="font-bold text-[10px] uppercase tracking-widest py-3">
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </div>
 
-        {/* Lado Direito: Permissões Individuais (Overrides) */}
         <div className="xl:col-span-8 space-y-8">
-           <Card className="border-none shadow-sm bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
+           <Card className={`border-none shadow-sm bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden transition-opacity duration-300 ${!selectedRoleId ? 'opacity-50 pointer-events-none' : ''}`}>
             <CardHeader className="p-8 pb-4">
                <CardTitle className="text-lg font-black uppercase text-slate-900 dark:text-white italic flex items-center gap-2">
-                <Fingerprint className="h-5 w-5 text-orange-600" /> Permissões Customizadas
+                <Fingerprint className="h-5 w-5 text-orange-600" /> Regras do Perfil
               </CardTitle>
               <CardDescription className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Overrides individuais ignoram as regras padrão do perfil
+                Defina as autorizações padrão em cada módulo do ERP
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0 pt-4">
@@ -225,13 +164,14 @@ export default function ColaboradorPermissoesPage() {
                  </TableHeader>
                  <TableBody>
                    {allModules.map((mod: any) => {
-                      const perm = contributor.permissions?.find((p: any) => p.moduleId === mod.id) || {
+                      const perm = selectedRole?.permissions?.find((p: any) => p.moduleId === mod.id) || {
                         access: false, create: false, update: false, delete: false, report: false
                       };
 
                       const allChecked = perm.access && perm.create && perm.update && perm.delete && perm.report;
 
                       const handleToggleAll = async (value: boolean) => {
+                          if (!selectedRole) return;
                           const newPerms = {
                             access: value,
                             create: value,
@@ -241,10 +181,19 @@ export default function ColaboradorPermissoesPage() {
                           };
 
                           try {
-                            const res = await ContributorSetPermissionAction(id, mod.id, newPerms);
+                            const res = await RoleSetPermissionAction(selectedRoleId, mod.id, newPerms);
                             if (res.success) {
                               toast.success("Permissões atualizadas");
-                              mutateContributor();
+                              const roleIndex = allRoles.findIndex((r: any) => r.id === selectedRoleId);
+                              if (roleIndex !== -1) {
+                                  const permIndex = allRoles[roleIndex].permissions?.findIndex((p: any) => p.moduleId === mod.id);
+                                  if (permIndex !== undefined && permIndex !== -1) {
+                                      allRoles[roleIndex].permissions[permIndex] = newPerms as any;
+                                  } else {
+                                      if (!allRoles[roleIndex].permissions) allRoles[roleIndex].permissions = [];
+                                      allRoles[roleIndex].permissions.push({ moduleId: mod.id, ...newPerms } as any);
+                                  }
+                              }
                             } else {
                               toast.error(res.error || "Erro ao salvar permissões");
                             }
