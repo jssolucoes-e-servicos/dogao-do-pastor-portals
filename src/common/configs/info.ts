@@ -1,4 +1,4 @@
 export const INFORMATIONS = {
   version: '1.1.17',
-  build: 'N01-35'
+  build: 'N01-38'
 }

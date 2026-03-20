@@ -29,20 +29,32 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
   });
 
   useEffect(() => {
-    if (order.customer.firstRegister === false) {
-      setCustomerFormData({
+    const isPlaceholder = order.customer.name?.includes("CLIENTE -");
+    const isNewCustomer = order.customer.firstRegister === true || isPlaceholder;
+
+    if (!isNewCustomer) {
+      setCustomerFormData(prev => ({
+        ...prev,
         name: order.customer.name,
         email: order.customer.email || '',
         phone: order.customer.phone || '',
         cpf: order.customerCPF,
         knowsChurch: order.customer.knowsChurch,
         allowsChurch: order.customer.allowsChurch,
-      });
+      }));
+      setIsFormEditable(false);
     } else {
-      // Se não há dados, o formulário já está em modo de edição
       setIsFormEditable(true);
+      // Só limpa se o estado atual estiver vazio ou com placeholder, para não apagar o que o usuário digita
+      setCustomerFormData(prev => {
+        const isCurrentNamePlaceholder = prev.name.includes("CLIENTE -");
+        if (prev.name === '' || isCurrentNamePlaceholder) {
+           return { ...prev, name: '', phone: prev.phone || '' };
+        }
+        return prev;
+      });
     }
-  }, [order]);
+  }, [order.id, order.customer.id]); 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -57,23 +69,35 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
     setIsLoading(true);
     try {
       //validação dos campos obrigatórios
+      const name = customerFormData.name?.trim() || '';
+      const phone = customerFormData.phone?.trim() || '';
+      
       const missingFields = [];
-      if (!customerFormData.name) missingFields.push('Nome');
-      if (!customerFormData.phone || customerFormData.phone.length !== 11) missingFields.push('WhatsApp');
+      if (!name || name === "" || name.includes("CLIENTE -")) missingFields.push('Nome');
+      if (!phone || phone.length !== 11) missingFields.push('WhatsApp (11 dígitos)');
 
       if (missingFields.length > 0) {
-        throw new Error(`Por favor, preencha os seguintes campos: ${missingFields.join(', ')}.`);
+        throw new Error(`Por favor, preencha corretamente os campos: ${missingFields.join(', ')}.`);
       }
       
       //atualiza os dados do cliente pelo preenchido no formulário do pedido
-      await UpdateCustomerInOrderAction(order.customer, customerFormData);
-      // sincroniza os dados do clente no pedido com os digitaods no formulário
-      await UpdateOrderCustomerAction(order.id, {
-        name: customerFormData.name,
-        phone: customerFormData.phone
+      const resUpdateCustomer = await UpdateCustomerInOrderAction(order.customer, {
+        ...customerFormData,
+        name,
+        phone
       });
+      if (!resUpdateCustomer.success) throw new Error(resUpdateCustomer.error || "Falha ao atualizar dados do cliente.");
+
+      // sincroniza os dados do cliente no pedido com os digitados no formulário
+      const resUpdateOrder = await UpdateOrderCustomerAction(order.id, {
+        name,
+        phone
+      });
+      if (!resUpdateOrder.success) throw new Error(resUpdateOrder.error || "Falha ao sincronizar dados com o pedido.");
+
       // avanca a etapa no pedido
-      await OrderUpStepAction(order);
+      const resUpStep = await OrderUpStepAction(order);
+      if (!resUpStep.success) throw new Error(resUpStep.error || "Falha ao avançar etapa.");
 
       router.push(`/comprar/${order.id}/tipo-pedido`)
       setIsLoading(false);
