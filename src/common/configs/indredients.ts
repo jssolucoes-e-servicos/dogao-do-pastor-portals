@@ -1,6 +1,7 @@
 export const INGREDIENTS = [
   'Batata Palha',
   'Catchup',
+  'Ervilha',
   'Maionese',
   'Milho',
   'Molho Vermelho',

@@ -29,6 +29,7 @@ import {
   PackageCheck,
   Settings,
   ShoppingCart,
+  Ticket,
   Truck,
   Users,
   UsersRound
@@ -92,6 +93,8 @@ const menuItems = [
     roles: ["IT", "ADMIN", "MANAGER", "LEADER"],
     items: [
       { title: "Colaboradores", url: "/erp/colaboradores", roles: ["IT", "ADMIN"] },
+      { title: "Venda por Ticket", url: "/erp/admin/venda-ticket", icon: Ticket },
+      { title: "Painel de Usuários", url: "/erp/admin/perfis-usuarios", roles: ["IT", "ADMIN"] },
       { title: "Gestão de Perfis", url: "/erp/perfis", roles: ["IT", "ADMIN"] },
       { title: "Permissões & Acessos", url: "/erp/configuracoes/permissoes", roles: ["IT"] },
       { title: "Vendedores", url: "/erp/vendedores" },
@@ -133,7 +136,8 @@ export function ErpSidebar({ user: initialUser }: { user?: any }) {
             src="/assets/images/dogao-do-pastor-nome.svg"
             alt="Dogão do Pastor Logo"
             width={isCollapsed ? 32 : 40}
-            height={isCollapsed ? 32 : 40}
+            height={40} 
+            style={{ width: isCollapsed ? '32px' : 'auto', height: isCollapsed ? '32px' : '40px' }}
             className="shrink-0 transition-all duration-300"
             priority
           />

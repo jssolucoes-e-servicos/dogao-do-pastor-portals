@@ -36,11 +36,12 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
   const [addressSelectedId, setAddressSelectedId] = useState<string | null>(null);
   const [showNewAddressForm, setShowNewAddressForm] = useState(!addresses || addresses.length === 0);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [scheduledTime, setScheduledTime] = useState<string>('');
   
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>('IVC_INTERNAL');
   const [suggestionText, setSuggestionText] = useState<string | undefined>(undefined);
 
-  const { data: partnersResponse, isLoading: isLoadingPartners } = useSWR(
+  const { data: partnersResponse } = useSWR(
     'partners-for-orders',
     () => ListPartnersForOrdersAction(),
     { revalidateOnFocus: false }
@@ -97,7 +98,27 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
         }
 
         if (!finalAddressId) throw new Error("Erro ao processar endereço.");
-        await SetOrderDeliveryAction(order.id, finalAddressId);
+
+        // Validação de 30 minutos conforme regra de negócio
+        if (scheduledTime) {
+          const [hours, minutes] = scheduledTime.split(':').map(Number);
+          const now = new Date();
+          const scheduledDate = new Date(now);
+          scheduledDate.setHours(hours, minutes, 0, 0);
+
+          // Se o horário escolhido já passou hoje (ex: escolheu 10:00 e agora são 22:00), 
+          // assume-se que é para o dia seguinte ou está inválido.
+          // No contexto deste app (edição de um dia), deve ser hoje.
+          const minDate = new Date(now.getTime() + 30 * 60 * 1000);
+          
+          if (scheduledDate < minDate) {
+            throw new Error("O horário de entrega deve ser de pelo menos 30 minutos a partir de agora.");
+          }
+        } else {
+          throw new Error("Por favor, selecione um horário para a entrega.");
+        }
+
+        await SetOrderDeliveryAction(order.id, finalAddressId, scheduledTime);
         router.push(`/comprar/${order.id}/pagamento`);
       }
     } catch (error: any) {
@@ -133,6 +154,8 @@ export function OrderTypeContents({ order, addresses = [] }: Props) {
           showNewAddressForm={showNewAddressForm}
           setShowNewAddressForm={setShowNewAddressForm}
           setAddressSelectedId={setAddressSelectedId}
+          scheduledTime={scheduledTime}
+          setScheduledTime={setScheduledTime}
         />
       )}
 

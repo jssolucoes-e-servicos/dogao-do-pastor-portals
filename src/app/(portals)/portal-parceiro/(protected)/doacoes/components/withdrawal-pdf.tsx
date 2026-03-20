@@ -1,3 +1,4 @@
+// src/app(portals)/portal-parceiro/(protected)/doacoes/compoments/withdrawl-pdf.tsx
 'use client';
 
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';

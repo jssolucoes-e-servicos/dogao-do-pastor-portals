@@ -5,13 +5,14 @@ import { OrderEntity } from "@/common/entities";
 import { IResponseObject } from "@/common/interfaces";
 import { fetchApi, FetchCtx } from "@/lib/api";
 
-export const SetOrderDeliveryAction = async (orderId: string, addressId: string): Promise<IResponseObject<OrderEntity>> => {
+export const SetOrderDeliveryAction = async (orderId: string, addressId: string, scheduledTime?: string): Promise<IResponseObject<OrderEntity>> => {
   try {
     const data = await fetchApi(FetchCtx.PUBLIC, `/orders/set-delivery`, {
       method: 'POST',
       body: JSON.stringify({
         orderId,
-        addressId
+        addressId,
+        scheduledTime
       })
     });
     return {

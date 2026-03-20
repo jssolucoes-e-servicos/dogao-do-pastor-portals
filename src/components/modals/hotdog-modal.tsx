@@ -43,18 +43,18 @@ export default function HotDogModal({ isOpen, onClose, onSave }: HotDogModalProp
           <DialogTitle>Personalize seu Dogão</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <h4 className="text-lg font-semibold text-center">
-            Selecione os ingredientes que você deseja <span className='font-bold text-red-600'>remover</span> {removedIngredients.length === 0 && 'ou cique em Dogão Completo'}
+          <h4 className="text-lg font-black uppercase italic text-center tracking-tight">
+            Selecione para <span className='text-red-500'>remover</span> {removedIngredients.length === 0 && 'ou clique em Completo'}
           </h4>
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="grid grid-cols-2 gap-3 text-sm">
             {INGREDIENTS.map((ingredient) => (
               <div
                 key={ingredient}
                 className={cn(
-                  'p-2 rounded-lg cursor-pointer transition-colors border-2 text-center',
+                  'p-4 rounded-2xl cursor-pointer transition-all border-2 text-center font-bold uppercase tracking-widest text-[10px]',
                   removedIngredients.includes(ingredient)
-                    ? 'bg-red-200 border-red-500 line-through'
-                    : 'bg-green-200 border-green-500'
+                    ? 'bg-red-50 border-red-500 text-red-600 line-through dark:bg-red-900/20 dark:border-red-600'
+                    : 'bg-emerald-50 border-emerald-500 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-600'
                 )}
                 onClick={() => handleIngredientToggle(ingredient)}
               >

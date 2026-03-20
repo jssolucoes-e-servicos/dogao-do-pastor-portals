@@ -22,7 +22,7 @@ export async function SearchCustomerAction(params: { cpf?: string, phone?: strin
     console.error(`Falha ao buscar cliente: ${error}`);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Falha ao buscar cliente",
+      error: error instanceof Error ? error.message : "Falha ao recuperar dados do cliente",
     };
   }
 }

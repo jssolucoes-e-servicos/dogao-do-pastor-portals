@@ -14,6 +14,8 @@ interface Props {
   showNewAddressForm: boolean;
   setShowNewAddressForm: (val: boolean) => void;
   setAddressSelectedId: (id: string | null) => void;
+  scheduledTime: string;
+  setScheduledTime: (val: string) => void;
 }
 
 export function TypeDelivery({ 
@@ -22,7 +24,9 @@ export function TypeDelivery({
   setAddressData, 
   showNewAddressForm, 
   setShowNewAddressForm, 
-  setAddressSelectedId 
+  setAddressSelectedId,
+  scheduledTime,
+  setScheduledTime
 }: Props) {
   
   const streetInputRef = useRef<HTMLInputElement>(null);
@@ -123,6 +127,7 @@ export function TypeDelivery({
     setAddressData((prev: any) => ({ ...prev, [name]: value }));
   };
 
+
   return (
     <div className="space-y-4">
       {addressesList.length > 0 && (
@@ -220,6 +225,18 @@ export function TypeDelivery({
           </div>
         </div>
       )}
+
+      <div className="space-y-1">
+        <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Horário de Entrega</Label>
+        <div className="flex gap-2">
+          <Input 
+            type="time" 
+            className="w-full font-bold h-12"
+            value={scheduledTime}
+            onChange={(e) => setScheduledTime(e.target.value)}
+          />
+        </div>
+      </div>
     </div>
   );
 }

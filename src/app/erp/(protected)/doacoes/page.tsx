@@ -95,7 +95,7 @@ export default function DoacoesPage() {
   // 3. Hook para Histórico do Parceiro Selecionado
   const { data: entriesResponse, mutate: mutateEntries } = useSWR(
     mounted && selectedPartner?.id ? [`partner-entries`, selectedPartner.id] : null,
-    () => ListPartnerEntriesAction(selectedPartner!.id, 1, 50)
+    () => selectedPartner?.id ? ListPartnerEntriesAction(selectedPartner.id, 1, 50) : null
   );
 
   const donations = salesResponse?.data?.data || [];
