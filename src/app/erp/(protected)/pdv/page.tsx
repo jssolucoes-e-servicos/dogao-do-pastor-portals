@@ -408,7 +408,7 @@ export default function PDVPage() {
         address: address,
         scheduledTime: (deliveryOption === 'PICKUP' || deliveryOption === 'DONATE') ? '' : scheduledTime,
         ticketNumbers: ticketNumbers,
-        totalValue: total,
+        totalValue: finalTotal,
         observations: extraData ? `${observations}\n\n${JSON.stringify(extraData)}` : observations,
         items: items.map(i => ({
           productId: "fixed-dogao",
@@ -823,7 +823,7 @@ export default function PDVPage() {
 
                     {finalTotal === 0 && items.length > 0 && (
                       <Button
-                        onClick={() => handleFinalize()}
+                        onClick={() => handleFinalize('TICKET')}
                         disabled={loading}
                         className="w-full h-20 rounded-[2rem] bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase italic text-lg tracking-tighter shadow-2xl shadow-emerald-600/20 transition-all active:scale-95"
                       >
