@@ -564,10 +564,9 @@ export default function PDVPage() {
                 <div className="space-y-2">
                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</Label>
                    <Input
-                     placeholder="PESQUISE OU DIGITE O NOME"
+                     placeholder="DIGITE O NOME DO CLIENTE"
                      value={customer.name}
                      onChange={(e) => setCustomer({ ...customer, name: e.target.value.toUpperCase() })}
-                     onBlur={() => handleSearchCustomer('name', customer.name)}
                      className="h-12 rounded-xl border-none bg-slate-50 dark:bg-slate-950 px-4 font-bold text-xs"
                    />
                 </div>
