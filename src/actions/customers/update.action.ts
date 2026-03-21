@@ -9,18 +9,8 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 export const CustomersUpdateAction = async (customerId: string, values: any): Promise<IResponseObject<CustomerEntity>> => {
   try {  
     const {message: checkWpp} = await WhatsappIsValidAction(values?.phone);
-    if (checkWpp === null) { 
-      return {
-        success: false,
-        error: "Ocorreu uma falha ao verificar se seu número é um whatsapp válido.",
-      }
-    }
-
-    if (checkWpp === 'false') {
-      return {
-        success: false,
-        error: "O número informado não possui um WhatsApp ativo. Informe outro",
-      }
+    if (checkWpp === null || checkWpp === 'false') { 
+      console.warn(`WhatsApp não validado para o número ${values?.phone}, mas permitindo prosseguir.`);
     }
 
     const data = await fetchApi(FetchCtx.PUBLIC, `/customers/${customerId}`, {

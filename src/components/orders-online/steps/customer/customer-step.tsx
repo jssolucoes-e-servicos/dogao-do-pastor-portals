@@ -70,11 +70,11 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
     try {
       //validação dos campos obrigatórios
       const name = customerFormData.name?.trim() || '';
-      const phone = customerFormData.phone?.trim() || '';
+      const phoneClean = customerFormData.phone?.replace(/\D/g, '') || '';
       
       const missingFields = [];
       if (!name || name === "" || name.includes("CLIENTE -")) missingFields.push('Nome');
-      if (!phone || phone.length !== 11) missingFields.push('WhatsApp (11 dígitos)');
+      if (!phoneClean || phoneClean.length !== 11) missingFields.push('WhatsApp (11 dígitos)');
 
       if (missingFields.length > 0) {
         throw new Error(`Por favor, preencha corretamente os campos: ${missingFields.join(', ')}.`);
@@ -84,14 +84,14 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
       const resUpdateCustomer = await UpdateCustomerInOrderAction(order.customer, {
         ...customerFormData,
         name,
-        phone
+        phone: phoneClean
       });
       if (!resUpdateCustomer.success) throw new Error(resUpdateCustomer.error || "Falha ao atualizar dados do cliente.");
 
       // sincroniza os dados do cliente no pedido com os digitados no formulário
       const resUpdateOrder = await UpdateOrderCustomerAction(order.id, {
         name,
-        phone
+        phone: phoneClean
       });
       if (!resUpdateOrder.success) throw new Error(resUpdateOrder.error || "Falha ao sincronizar dados com o pedido.");
 
@@ -99,7 +99,7 @@ export function OrderOnlineCustomerStep({ order }: { order: OrderEntity }) {
       const resUpStep = await OrderUpStepAction(order);
       if (!resUpStep.success) throw new Error(resUpStep.error || "Falha ao avançar etapa.");
 
-      router.push(`/comprar/${order.id}/tipo-pedido`)
+      router.push(`/comprar/${order.id}/pedido`)
       setIsLoading(false);
     } catch (err: any) {
       setIsLoading(false);

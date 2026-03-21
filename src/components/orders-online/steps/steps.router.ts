@@ -24,7 +24,7 @@ export async function StepsRouter({orderId, page}: StepsRouterProps): Promise<Or
 
   if (!order) {  
     console.log('order: ',order); 
-    redirect('/off-line');
+    redirect('/comprar');
   };
 
   processRedirects(order, page);

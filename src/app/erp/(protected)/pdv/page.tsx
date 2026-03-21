@@ -38,6 +38,7 @@ import {
 import HotDogModal from "@/components/modals/hotdog-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { INGREDIENTS } from "@/common/configs/indredients";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -88,17 +89,12 @@ const PAYMENT_METHODS = [
   { value: 'CARD_CREDIT', label: 'Cartão (Link Online)' },
 ];
 
-const INGREDIENTS = [
-  "Milho", "Ervilha", "Batata Palha", "Maionese", "Catchup", "Mostarda", "Vinagrete", "Purê"
-];
 
 interface PdvItem {
   id: string;
   name: string;
-  quantity: number;
   price: number;
   removedIngredients: string[];
-  observations: string;
 }
 
 export default function PDVPage() {
@@ -322,9 +318,9 @@ export default function PDVPage() {
     }
   };
 
-  const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const total = items.reduce((acc, item) => acc + item.price, 0);
   const dogPrice = statusRes?.edition?.dogPrice || 24.99;
-  const totalItemsQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
+  const totalItemsQuantity = items.length;
   const ticketDiscount = Math.min(totalItemsQuantity, ticketNumbers.length) * dogPrice;
   const finalTotal = Math.max(0, total - ticketDiscount);
 
@@ -332,10 +328,8 @@ export default function PDVPage() {
     const newItem: PdvItem = {
       id: Math.random().toString(36).substring(7),
       name: statusRes?.edition?.name || "Dogão",
-      quantity: 1,
       price: dogPrice,
       removedIngredients: removedIngredients,
-      observations: "",
     };
     setItems([...items, newItem]);
     toast.success("Item adicionado");
@@ -418,8 +412,6 @@ export default function PDVPage() {
         observations: extraData ? `${observations}\n\n${JSON.stringify(extraData)}` : observations,
         items: items.map(i => ({
           productId: "fixed-dogao",
-          quantity: i.quantity,
-          observations: i.observations,
           removedIngredients: i.removedIngredients,
         })),
         sellerId: isSellerOnly ? user?.sellerId : undefined,
@@ -714,14 +706,11 @@ export default function PDVPage() {
                                   {item.removedIngredients.length > 0 && (
                                      <span className="text-[9px] font-bold text-red-500 uppercase">Sem: {item.removedIngredients.join(", ")}</span>
                                   )}
-                                  {item.observations && (
-                                     <span className="text-[9px] font-medium text-slate-400 italic">Obs: {item.observations}</span>
-                                  )}
                                </div>
                             </TableCell>
-                            <TableCell className="text-center font-black text-xs italic">{item.quantity}x</TableCell>
+                            <TableCell className="text-center font-black text-xs italic">1x</TableCell>
                             <TableCell className="text-right font-bold text-xs text-slate-500">R$ {item.price.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-black text-xs text-slate-900 dark:text-white italic">R$ {(item.price * item.quantity).toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-black text-xs text-slate-900 dark:text-white italic">R$ {item.price.toFixed(2)}</TableCell>
                             <TableCell className="pr-8 text-right">
                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="h-9 w-9 rounded-xl hover:bg-red-50 dark:hover:bg-red-950 text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                                   <Trash2 className="h-4 w-4" />
