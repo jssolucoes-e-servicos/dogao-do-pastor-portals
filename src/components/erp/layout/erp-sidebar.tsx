@@ -110,12 +110,12 @@ const menuItems = [
     ],
   },
 
-  /* {
+   {
     title: "Configurações",
     icon: Settings,
     url: "/erp/configuracoes",
     roles: ["IT", "ADMIN"]
-  } */
+  } 
 ]
 
 export function ErpSidebar({ user: initialUser }: { user?: any }) {

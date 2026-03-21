@@ -14,7 +14,6 @@ import { SearchCustomerAction } from "@/actions/customers/search-customer.action
 import { CommandsPaginateAction } from "@/actions/commands/paginate.action";
 import { UpdateCommandStatusAction } from "@/actions/commands/update-status.action";
 import { GetPaymentStatusAction } from "@/actions/payments/get-status.action";
-import { GenerateOrderPixAction } from "@/actions/payments/generate-order-pix.action";
 import { ValidateTicketAction } from "@/actions/tickets/validate-ticket.action";
 import { usePermissions } from "@/hooks/use-permissions";
 import { cn } from "@/lib/utils";
@@ -126,6 +125,9 @@ export default function PDVPage() {
   const [isCustomerSelectOpen, setIsCustomerSelectOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [customerOptions, setCustomerOptions] = useState<any[]>([]);
+  const [customerAddresses, setCustomerAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
+  const [isNewAddress, setIsNewAddress] = useState(false);
   const [isDelivering, setIsDelivering] = useState<string | null>(null);
   const [isCheckingIn, setIsCheckingIn] = useState<string | null>(null);
   const [activePickupSubTab, setActivePickupSubTab] = useState("prontos");
@@ -234,6 +236,9 @@ export default function PDVPage() {
     setAddress("");
     setScheduledTime("");
     setTicketNumbers([]);
+    setCustomerAddresses([]);
+    setSelectedAddressId(undefined);
+    setIsNewAddress(false);
     mutateStatus();
     mutateCheckIn();
     mutatePickups();
@@ -242,6 +247,7 @@ export default function PDVPage() {
   // Google Maps Autocomplete Logic
   useEffect(() => {
     if (!mounted || !addressInputRef.current || deliveryOption !== "DELIVERY") return;
+    if (customerAddresses.length > 0 && !isNewAddress) return; // saved addresses shown, no input to attach to
 
     const initAutocomplete = async () => {
       try {
@@ -273,7 +279,7 @@ export default function PDVPage() {
         autocompleteRef.current = null;
       }
     };
-  }, [mounted, deliveryOption]);
+  }, [mounted, deliveryOption, customerAddresses, isNewAddress]);
 
   const handleCheckIn = async (orderId: string) => {
     setIsCheckingIn(orderId);
@@ -310,6 +316,9 @@ export default function PDVPage() {
           phone: found.phone || "",
           cpf: found.cpf || ""
         });
+        setCustomerAddresses(found.addresses || []);
+        setSelectedAddressId(undefined);
+        setIsNewAddress(false);
         toast.success(`Cliente encontrado: ${found.name}`);
       } else if (items.length > 1) {
         setCustomerOptions(items);
@@ -406,6 +415,7 @@ export default function PDVPage() {
         paymentMethod: finalMethod,
         deliveryOption: deliveryOption,
         address: address,
+        addressId: selectedAddressId,
         scheduledTime: (deliveryOption === 'PICKUP' || deliveryOption === 'DONATE') ? '' : scheduledTime,
         ticketNumbers: ticketNumbers,
         totalValue: finalTotal,
@@ -420,18 +430,18 @@ export default function PDVPage() {
       const res = await CreatePdvAction(dto);
       if (res.success && res.data) {
         if (finalMethod === 'PIX') {
-          // Trigger PIX generation
-          const pixRes = await GenerateOrderPixAction(res.data.id);
-          if (pixRes.success) {
-            setPixData(pixRes.data);
+          // PIX já foi gerado pelo backend no createPDV — usa o dado retornado diretamente
+          const payment = (res.data as any).payments?.[0];
+          if (payment?.pixCopyPaste) {
+            setPixData(payment);
             setPaymentPollingId(res.data.id);
             setIsPaymentPolling(true);
           } else {
-            toast.error("Erro ao gerar QR Code PIX");
+            toast.error("Erro ao obter QR Code PIX");
           }
         } else if (finalMethod === 'CARD_CREDIT') {
-          // Trigger Credit Link (Mock or real Link generation)
-          toast.info("Link de pagamento enviado ao cliente!");
+          // Link de pagamento gerado e enviado via WhatsApp pelo backend
+          toast.success("Link de pagamento enviado via WhatsApp para o cliente!");
           setPaymentPollingId(res.data.id);
           setIsPaymentPolling(true);
         } else {
@@ -593,17 +603,80 @@ export default function PDVPage() {
                 {deliveryOption === "DELIVERY" && (
                    <div className="animate-in slide-in-from-top-4 duration-300 space-y-4">
                       <div className="space-y-2">
-                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Endereço de Entrega (Google Autocomplete)</Label>
-                         <div className="relative">
-                            <Input
-                              ref={addressInputRef}
-                              placeholder="RUA, NÚMERO, BAIRRO..."
-                              value={address}
-                              onChange={(e) => setAddress(e.target.value)}
-                              className="h-14 rounded-xl border-none bg-slate-50 dark:bg-slate-950 pl-12 pr-4 font-bold text-xs"
-                            />
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-600" />
-                         </div>
+                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Endereço de Entrega</Label>
+
+                         {/* Saved addresses */}
+                         {customerAddresses.length > 0 && !isNewAddress && (
+                           <div className="space-y-2">
+                             {customerAddresses.map((addr: any) => {
+                               const parts = [
+                                 addr.street,
+                                 addr.number && addr.number !== '-' ? addr.number : null,
+                                 addr.complement || null,
+                                 addr.neighborhood && addr.neighborhood !== '-' ? addr.neighborhood : null,
+                                 addr.city && addr.city !== '-' ? addr.city : null,
+                               ].filter(Boolean);
+                               const label = parts.join(', ') || addr.street || 'Endereço sem detalhes';
+                               const isSelected = selectedAddressId === addr.id;
+                               return (
+                                 <button
+                                   key={addr.id}
+                                   type="button"
+                                   onClick={() => {
+                                     setSelectedAddressId(addr.id);
+                                     setAddress(label);
+                                   }}
+                                   className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                                     isSelected
+                                       ? 'border-orange-600 bg-orange-50 dark:bg-orange-950/20 text-orange-700'
+                                       : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 hover:border-slate-300'
+                                   }`}
+                                 >
+                                   <MapPin className={`h-4 w-4 shrink-0 ${isSelected ? 'text-orange-600' : 'text-slate-400'}`} />
+                                   <span className="text-[11px] font-bold uppercase truncate">{label}</span>
+                                   {isSelected && <CheckCircle2 className="h-4 w-4 ml-auto shrink-0 text-orange-600" />}
+                                 </button>
+                               );
+                             })}
+                             <button
+                               type="button"
+                               onClick={() => {
+                                 setIsNewAddress(true);
+                                 setSelectedAddressId(undefined);
+                                 setAddress("");
+                               }}
+                               className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 hover:border-orange-400 hover:text-orange-600 transition-all"
+                             >
+                               <Plus className="h-4 w-4" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Novo Endereço</span>
+                             </button>
+                           </div>
+                         )}
+
+                         {/* Google Autocomplete — shown when no saved addresses or user chose new */}
+                         {(customerAddresses.length === 0 || isNewAddress) && (
+                           <div className="relative">
+                             {isNewAddress && (
+                               <button
+                                 type="button"
+                                 onClick={() => { setIsNewAddress(false); setAddress(""); setSelectedAddressId(undefined); }}
+                                 className="text-[10px] font-black uppercase text-slate-400 hover:text-orange-600 mb-2 flex items-center gap-1"
+                               >
+                                 ← Usar endereço salvo
+                               </button>
+                             )}
+                             <div className="relative">
+                               <Input
+                                 ref={addressInputRef}
+                                 placeholder="RUA, NÚMERO, BAIRRO..."
+                                 value={address}
+                                 onChange={(e) => setAddress(e.target.value)}
+                                 className="h-14 rounded-xl border-none bg-slate-50 dark:bg-slate-950 pl-12 pr-4 font-bold text-xs"
+                               />
+                               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-600" />
+                             </div>
+                           </div>
+                         )}
                       </div>
                    </div>
                 )}
@@ -698,8 +771,17 @@ export default function PDVPage() {
                       </TableRow>
                    </TableHeader>
                    <TableBody>
-                      {items.map(item => (
-                         <TableRow key={item.id} className="border-slate-50 dark:border-slate-800 group hover:bg-slate-50/50 dark:hover:bg-slate-950/50">
+                      {(() => {
+                        // Group items by name+ingredients for display
+                        const groups: { key: string; item: PdvItem; count: number }[] = [];
+                        items.forEach(item => {
+                          const key = item.name + '|' + JSON.stringify(item.removedIngredients);
+                          const existing = groups.find(g => g.key === key);
+                          if (existing) existing.count++;
+                          else groups.push({ key, item, count: 1 });
+                        });
+                        return groups.map(({ key, item, count }) => (
+                         <TableRow key={key} className="border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-950/50">
                             <TableCell className="pl-8 py-6">
                                <div className="flex flex-col">
                                   <span className="font-black text-xs uppercase italic text-slate-900 dark:text-white">{item.name}</span>
@@ -708,16 +790,47 @@ export default function PDVPage() {
                                   )}
                                </div>
                             </TableCell>
-                            <TableCell className="text-center font-black text-xs italic">1x</TableCell>
+                            <TableCell className="text-center">
+                               <div className="flex items-center justify-center gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveItem(item.id)}
+                                    className="h-7 w-7 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 text-red-400 hover:text-red-600"
+                                  >
+                                    <span className="text-base font-black leading-none">−</span>
+                                  </Button>
+                                  <span className="font-black text-xs italic w-6 text-center">{count}x</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleAddItem(item.removedIngredients)}
+                                    className="h-7 w-7 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 text-orange-400 hover:text-orange-600"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </Button>
+                               </div>
+                            </TableCell>
                             <TableCell className="text-right font-bold text-xs text-slate-500">R$ {item.price.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-black text-xs text-slate-900 dark:text-white italic">R$ {item.price.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-black text-xs text-slate-900 dark:text-white italic">R$ {(item.price * count).toFixed(2)}</TableCell>
                             <TableCell className="pr-8 text-right">
-                               <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="h-9 w-9 rounded-xl hover:bg-red-50 dark:hover:bg-red-950 text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                               <Button
+                                 variant="ghost"
+                                 size="icon"
+                                 onClick={() => {
+                                   // Remove ALL items of this group
+                                   const groupKey = item.name + '|' + JSON.stringify(item.removedIngredients);
+                                   setItems(prev => prev.filter(i => i.name + '|' + JSON.stringify(i.removedIngredients) !== groupKey));
+                                   toast.info("Itens removidos");
+                                 }}
+                                 className="h-9 w-9 rounded-xl hover:bg-red-50 dark:hover:bg-red-950 text-red-500 transition-all"
+                               >
                                   <Trash2 className="h-4 w-4" />
                                </Button>
                             </TableCell>
                          </TableRow>
-                      ))}
+                        ));
+                      })()}
                       {items.length === 0 && (
                          <TableRow>
                             <TableCell colSpan={5} className="py-20 text-center">
@@ -775,12 +888,22 @@ export default function PDVPage() {
                     )}
 
                     {items.length > 0 && (
-                      <Button
-                        onClick={() => setIsPaymentStep(true)}
-                        className="w-full h-24 rounded-[2rem] bg-orange-600 hover:bg-orange-700 text-white font-black uppercase italic text-xl tracking-tighter shadow-2xl shadow-orange-600/20 mt-4 transition-all active:scale-95 group animate-pulse hover:animate-none"
-                      >
-                         IR PARA PAGAMENTO <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-2 transition-transform" />
-                      </Button>
+                      finalTotal === 0 ? (
+                        <Button
+                          onClick={() => handleFinalize('TICKET')}
+                          disabled={loading}
+                          className="w-full h-24 rounded-[2rem] bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase italic text-xl tracking-tighter shadow-2xl shadow-emerald-600/20 mt-4 transition-all active:scale-95 group animate-pulse hover:animate-none"
+                        >
+                          {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>FINALIZAR PEDIDO (TICKETS) <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-2 transition-transform" /></>}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => setIsPaymentStep(true)}
+                          className="w-full h-24 rounded-[2rem] bg-orange-600 hover:bg-orange-700 text-white font-black uppercase italic text-xl tracking-tighter shadow-2xl shadow-orange-600/20 mt-4 transition-all active:scale-95 group animate-pulse hover:animate-none"
+                        >
+                          IR PARA PAGAMENTO <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-2 transition-transform" />
+                        </Button>
+                      )
                     )}
                   </div>
                 ) : (
@@ -1151,6 +1274,9 @@ export default function PDVPage() {
                         size="sm"
                         onClick={() => {
                           setCustomer({ name: opt.name, phone: opt.phone, cpf: opt.cpf || "" });
+                          setCustomerAddresses(opt.addresses || []);
+                          setSelectedAddressId(undefined);
+                          setIsNewAddress(false);
                           setIsCustomerSelectOpen(false);
                         }}
                         className="rounded-lg h-8 bg-slate-900 text-white hover:bg-orange-600 font-bold uppercase text-[9px] tracking-widest"

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, User, Bell, Shield, Database, Save, Smartphone, MapPin, QrCode, Loader2 } from "lucide-react";
+import { Settings, User, Bell, Shield, Database, Save, Smartphone, MapPin, QrCode, Loader2, Ticket, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,12 +12,14 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { GetMeAction, UpdateMeAction } from "@/actions/contributors/me.action";
 import { GetActiveEditionAction } from "@/actions/editions/get-active-edition.action";
+import { GetTicketsStatusAction, SeedTicketsAction } from "@/actions/tickets/seed-tickets.action";
 import { toast } from "sonner";
 import Link from "next/link";
 
 export default function ConfiguracoesPage() {
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -33,8 +35,26 @@ export default function ConfiguracoesPage() {
     () => GetActiveEditionAction()
   );
 
+  const { data: ticketsStatusRes, mutate: mutateTickets } = useSWR(
+    mounted ? 'tickets-status' : null,
+    () => GetTicketsStatusAction()
+  );
+
   const profile = profileRes?.data as any;
   const activeEdition = editionRes?.data as any;
+  const ticketsStatus = ticketsStatusRes?.data as any;
+
+  const handleSeedTickets = async () => {
+    setIsSeeding(true);
+    const res = await SeedTicketsAction();
+    if (res.success && (res.data as any)?.success) {
+      toast.success((res.data as any).message);
+      mutateTickets();
+    } else {
+      toast.error((res.data as any)?.message || res.error || "Erro ao criar tickets");
+    }
+    setIsSeeding(false);
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -97,6 +117,7 @@ export default function ConfiguracoesPage() {
                 { id: 'seguranca', label: 'Segurança', icon: Shield },
                 { id: 'sistema', label: 'Integrações', icon: Database },
                 { id: 'mobile', label: 'App Mobile', icon: Smartphone },
+                { id: 'tickets', label: 'Tickets', icon: Ticket },
               ].map((item) => (
                 <TabsTrigger
                   key={item.id}
@@ -406,6 +427,76 @@ export default function ConfiguracoesPage() {
                          <span className="text-xs font-black uppercase italic text-slate-900 dark:text-white">v2.4.0 PROD</span>
                       </div>
                    </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="tickets" className="mt-0 space-y-6">
+              <Card className="border-none shadow-sm bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+                <CardHeader className="p-8 pb-4">
+                  <CardTitle className="text-xl font-black uppercase text-slate-900 dark:text-white italic flex items-center gap-3">
+                    <Ticket className="h-6 w-6 text-orange-600" /> Tickets Físicos
+                  </CardTitle>
+                  <CardDescription className="text-xs font-bold uppercase text-slate-400">
+                    Gerencie os tickets da edição ativa
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-8 space-y-6">
+                  {/* Status atual */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { label: 'Total', value: ticketsStatus?.total ?? '—', color: 'slate' },
+                      { label: 'Utilizados', value: ticketsStatus?.used ?? '—', color: 'orange' },
+                      { label: 'Disponíveis', value: ticketsStatus?.available ?? '—', color: 'emerald' },
+                    ].map((stat) => (
+                      <div key={stat.label} className={`p-6 rounded-3xl bg-${stat.color}-50 dark:bg-${stat.color}-950/20 border border-${stat.color}-100 dark:border-${stat.color}-900/30 flex flex-col items-center gap-1`}>
+                        <span className={`text-[9px] font-black uppercase text-${stat.color}-400 tracking-widest`}>{stat.label}</span>
+                        <span className={`text-2xl font-black italic text-${stat.color}-700 dark:text-${stat.color}-300`}>{stat.value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator className="bg-slate-100 dark:bg-slate-800" />
+
+                  {/* Edição */}
+                  {ticketsStatus?.editionName && (
+                    <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <div className="h-8 w-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                        <Ticket className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Edição Ativa</p>
+                        <p className="font-black text-xs uppercase italic">{ticketsStatus.editionName}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ação */}
+                  {ticketsStatus?.total > 0 ? (
+                    <div className="flex items-center gap-3 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase">
+                        Tickets já cadastrados para esta edição. Nenhuma ação necessária.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30">
+                        <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+                        <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase">
+                          Nenhum ticket encontrado para a edição ativa. Clique abaixo para criar 1000 tickets.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleSeedTickets}
+                        disabled={isSeeding}
+                        className="w-full h-14 rounded-[1.5rem] bg-orange-600 hover:bg-orange-700 text-white font-black uppercase text-[10px] tracking-widest gap-3 shadow-xl shadow-orange-600/20 transition-all active:scale-95"
+                      >
+                        {isSeeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />}
+                        {isSeeding ? 'CRIANDO TICKETS...' : 'CRIAR 1000 TICKETS'}
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
