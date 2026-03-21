@@ -16,7 +16,7 @@ export async function OrdersPaginateAction(
   try {
     const params = new URLSearchParams({
       page: page.toString(),
-      perPage: "20"
+      perPage: "200"
     });
 
     if (search) params.append("search", search);

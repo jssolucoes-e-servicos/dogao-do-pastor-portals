@@ -24,6 +24,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import {
   Building2,
   ChevronRight,
+  HandCoins,
   Heart,
   LayoutDashboard,
   PackageCheck,
@@ -40,14 +41,14 @@ import { useEffect, useState } from "react"
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
-  
+  { title: "PDV (Ponto de Venda)", url: "/erp/pdv", icon: ShoppingCart},
   {
     title: "Vendas & Clientes",
     icon: ShoppingCart,
     roles: ["IT", "ADMIN", "FINANCE", "SELLER", "RECEPTION"],
     items: [
-      { title: "PDV (Ponto de Venda)", url: "/erp/pdv" },
-      { title: "Todos os Pedidos", url: "/erp/pedidos" },
+       /*{ title: "PDV (Ponto de Venda)", url: "/erp/pdv" },*/
+      { title: "Todos os Pedidos", url: "/erp/pedidos" }, 
       { title: "Clientes", url: "/erp/clientes", roles: ["IT", "ADMIN", "RECEPTION"] },
       { title: "Em análise", url: "/erp/pedidos/em-analise", roles: ["IT", "ADMIN", "RECEPTION"] },
     ],
@@ -63,13 +64,19 @@ const menuItems = [
       { title: "Entidades Parceiras", url: "/erp/parceiros", roles: ["IT", "ADMIN", "FINANCE"] },
     ],
   },
-
   {
-    title: "Operação Retiradas",
-    icon: PackageCheck,
+    title: "Recepção",
+    icon: HandCoins,
     roles: ["IT", "ADMIN", "RECEPTION", "EXPEDITION"],
     items: [
       { title: "Fila de Retiradas", url: "/erp/retiradas/fila" },
+    ],
+  },
+  {
+    title: "Operação",
+    icon: PackageCheck,
+    roles: ["IT", "ADMIN", "RECEPTION", "EXPEDITION"],
+    items: [
       { title: "Comandas", url: "/erp/comandas" },
       { title: "Produção (Cozinha)", url: "/erp/producao/cozinha" },
     ],
@@ -81,9 +88,9 @@ const menuItems = [
     roles: ["IT", "ADMIN", "EXPEDITION", "DELIVERY"],
     items: [
       { title: "Fila de Despacho", url: "/erp/entregas/fila" },
-      { title: "Gerenciar Rotas", url: "/erp/entregas/rotas" },
-      { title: "Rastreio Real-time", url: "/erp/entregas/rastreio" },
-      { title: "Ocorrências", url: "/erp/entregas/chamados" },
+      /* { title: "Gerenciar Rotas", url: "/erp/entregas/rotas" }, */
+      /* { title: "Rastreio Real-time", url: "/erp/entregas/rastreio" }, */
+      /* { title: "Ocorrências", url: "/erp/entregas/chamados" }, */
     ],
   },
 
@@ -93,7 +100,7 @@ const menuItems = [
     roles: ["IT", "ADMIN", "MANAGER", "LEADER"],
     items: [
       { title: "Colaboradores", url: "/erp/colaboradores", roles: ["IT", "ADMIN"] },
-      { title: "Venda por Ticket", url: "/erp/admin/venda-ticket", icon: Ticket },
+     /*  { title: "Venda por Ticket", url: "/erp/admin/venda-ticket", icon: Ticket }, */
       { title: "Painel de Usuários", url: "/erp/admin/perfis-usuarios", roles: ["IT", "ADMIN"] },
       { title: "Gestão de Perfis", url: "/erp/perfis", roles: ["IT", "ADMIN"] },
       { title: "Permissões & Acessos", url: "/erp/configuracoes/permissoes", roles: ["IT"] },
@@ -103,12 +110,12 @@ const menuItems = [
     ],
   },
 
-  {
+  /* {
     title: "Configurações",
     icon: Settings,
     url: "/erp/configuracoes",
     roles: ["IT", "ADMIN"]
-  }
+  } */
 ]
 
 export function ErpSidebar({ user: initialUser }: { user?: any }) {

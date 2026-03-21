@@ -165,7 +165,7 @@ export default function PDVPage() {
 
   const { data: pickupRes, mutate: mutatePickups, isValidating: isValidatingPickups } = useSWR(
     mounted && activeTab === 'retiradas' && activePickupSubTab === 'prontos' ? ['pickup-commands', pickupSearch] : null,
-    () => CommandsPaginateAction(1, 100, pickupSearch, CommandStatusEnum.PRODUCED),
+    () => CommandsPaginateAction(1, 200, pickupSearch, CommandStatusEnum.PRODUCED, 'PICKUP'),
     { refreshInterval: 10000 }
   );
 

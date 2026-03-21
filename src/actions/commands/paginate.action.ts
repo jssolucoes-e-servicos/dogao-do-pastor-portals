@@ -14,7 +14,7 @@ export async function CommandsPaginateAction(
   try {
     const params = new URLSearchParams({
       page: page.toString(),
-      limit: limit.toString(),
+      perPage: limit.toString(),
     });
 
     if (search) params.append("search", search);
