@@ -7,6 +7,7 @@ import { CreatePdvAction } from "@/actions/orders/create-pdv.action";
 import { ListPartnersForOrdersAction } from "@/actions/partners/list-partners-for-orders.action";
 import { DeliverOrderAction } from "@/actions/orders/deliver.action";
 import { CommandsCheckInAction } from "@/actions/commands/check-in.action";
+import { CheckInModal } from "@/components/erp/modals/check-in-modal";
 import { CommandStatusEnum } from "@/common/enums/command-status.enum";
 import { OrdersPaginateAction } from "@/actions/orders/paginate.action";
 import { RedeemVoucherAction } from "@/actions/vouchers/redeem-voucher.action";
@@ -130,6 +131,8 @@ export default function PDVPage() {
   const [isNewAddress, setIsNewAddress] = useState(false);
   const [isDelivering, setIsDelivering] = useState<string | null>(null);
   const [isCheckingIn, setIsCheckingIn] = useState<string | null>(null);
+  const [checkInOrder, setCheckInOrder] = useState<any>(null);
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [activePickupSubTab, setActivePickupSubTab] = useState("prontos");
   const [pickupSearch, setPickupSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -281,6 +284,7 @@ export default function PDVPage() {
     };
   }, [mounted, deliveryOption, customerAddresses, isNewAddress]);
 
+  // Check-in direto (sem modal) — usado no fluxo automático pós-pagamento
   const handleCheckIn = async (orderId: string) => {
     setIsCheckingIn(orderId);
     try {
@@ -297,6 +301,12 @@ export default function PDVPage() {
     } finally {
       setIsCheckingIn(null);
     }
+  };
+
+  // Abre o modal de check-in com seleção de items
+  const handleOpenCheckInModal = (order: any) => {
+    setCheckInOrder(order);
+    setIsCheckInModalOpen(true);
   };
 
   const handleSearchCustomer = async (key: 'cpf' | 'phone' | 'name', value: string) => {
@@ -1411,9 +1421,9 @@ export default function PDVPage() {
                 </Button>
                 <Button
                   disabled={isCheckingIn === selectedOrder.id}
-                  onClick={async () => {
-                    await handleCheckIn(selectedOrder.id);
+                  onClick={() => {
                     setIsOrderDetailsOpen(false);
+                    handleOpenCheckInModal(selectedOrder);
                   }}
                   className="flex-[2] rounded-2xl h-14 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 gap-3"
                 >
@@ -1425,6 +1435,18 @@ export default function PDVPage() {
           )}
         </DialogContent>
       </Dialog>
+      {/* Check-in Modal */}
+      <CheckInModal
+        open={isCheckInModalOpen}
+        onClose={() => setIsCheckInModalOpen(false)}
+        onSuccess={() => { mutateCheckIn(); mutatePickups(); }}
+        order={checkInOrder ? {
+          id: checkInOrder.id,
+          customerName: checkInOrder.customerName,
+          items: checkInOrder.items || [],
+        } : null}
+      />
+
       {/* Payment & Ticket Modals */}
       <Dialog open={isPixModalOpen} onOpenChange={setIsPixModalOpen}>
         <DialogContent 

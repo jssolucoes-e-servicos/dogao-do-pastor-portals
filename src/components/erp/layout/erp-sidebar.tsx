@@ -23,6 +23,7 @@ import {
 import { usePermissions } from "@/hooks/use-permissions"
 import {
   Building2,
+  Calendar,
   ChevronRight,
   HandCoins,
   Heart,
@@ -31,6 +32,7 @@ import {
   Settings,
   ShoppingCart,
   Ticket,
+  Trophy,
   Truck,
   Users,
   UsersRound
@@ -110,12 +112,24 @@ const menuItems = [
     ],
   },
 
-   {
+  {
     title: "Configurações",
     icon: Settings,
     url: "/erp/configuracoes",
     roles: ["IT", "ADMIN"]
-  } 
+  },
+  {
+    title: "Edições",
+    icon: Calendar,
+    url: "/erp/edicoes",
+    roles: ["IT", "ADMIN"]
+  },
+  {
+    title: "Sorteios",
+    icon: Trophy,
+    url: "/erp/sorteio",
+    roles: ["IT", "ADMIN"]
+  }
 ]
 
 export function ErpSidebar({ user: initialUser }: { user?: any }) {
