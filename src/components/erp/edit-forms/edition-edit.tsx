@@ -29,8 +29,8 @@ const formSchema = z.object({
   saleEndDate: z.string().min(1, "Fim das vendas obrigatório"),
   autoEnableDate: z.string().optional(),
   autoDisableDate: z.string().optional(),
-  limitSale: z.coerce.number().min(1, "Limite mínimo é 1"),
-  dogPrice: z.coerce.number().min(0.01, "Preço inválido"),
+  limitSale: z.number().min(1, "Limite mínimo é 1"),
+  dogPrice: z.number().min(0.01, "Preço inválido"),
   active: z.boolean().optional(),
 });
 
@@ -160,7 +160,7 @@ export function EditionForm({ edition }: Props) {
                   <DollarSign className="h-3.5 w-3.5 text-orange-600" /> Preço por Dog (R$)
                 </FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" step="0.01" min="0" className="h-12 border-orange-100 focus-visible:ring-orange-500 font-bold" />
+                  <Input {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} type="number" step="0.01" min="0" className="h-12 border-orange-100 focus-visible:ring-orange-500 font-bold" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -199,7 +199,7 @@ export function EditionForm({ edition }: Props) {
                   <Package className="h-3.5 w-3.5 text-orange-600" /> Limite de Vendas (unidades)
                 </FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" min="1" className="h-12 border-orange-100 focus-visible:ring-orange-500 font-bold" />
+                  <Input {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} type="number" min="1" className="h-12 border-orange-100 focus-visible:ring-orange-500 font-bold" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
