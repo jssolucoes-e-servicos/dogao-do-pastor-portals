@@ -25,7 +25,7 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-br" suppressHydrationWarning>
-      <body 
+      <body
         className="h-full antialiased bg-background"
         suppressHydrationWarning
         key={canSell ? 'sale-open' : 'sale-close'}

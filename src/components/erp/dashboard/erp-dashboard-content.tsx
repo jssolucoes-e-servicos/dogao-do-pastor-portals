@@ -23,6 +23,7 @@ import {
   WifiOff
 } from "lucide-react";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useEdition } from "@/contexts/edition-context";
 import { useEffect, useState } from "react";
 import useSWR from 'swr';
 import Link from "next/link";
@@ -37,15 +38,16 @@ const logisticsLabels: Record<string, string> = {
 export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { selectedId } = useEdition();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const { data: response, error, isLoading, isValidating } = useSWR(
-    'dashboard-summary',
+    ['dashboard-summary', selectedId],
     async () => {
-      const res = await DashboardSummaryAction();
+      const res = await DashboardSummaryAction(selectedId || undefined);
       if (!res || !res.success) {
         if (res?.error?.includes("403") || res?.error?.includes("negado")) {
           return { success: false, error: "Acesso Negado", code: 403 };

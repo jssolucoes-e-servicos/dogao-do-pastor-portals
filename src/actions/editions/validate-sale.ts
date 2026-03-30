@@ -25,7 +25,7 @@ export async function getValidatedSaleStatus(): Promise<SaleStatus> {
     const end = new Date(edition.autoDisableDate);
     
     // Fuso fixo para evitar que o servidor em UTC divirja do Brasil
-    startFormatted = start.toLocaleString('pt-BR', { 
+    startFormatted = start.toLocaleString('pt-BR', {
       timeZone: 'America/Sao_Paulo',
       day: '2-digit',
       month: '2-digit',

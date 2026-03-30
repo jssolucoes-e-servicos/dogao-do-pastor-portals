@@ -13,7 +13,7 @@ export const getActiveEdition = async (): Promise<IEditionResponse> => {
         tags: ['active-edition'] // Tag para limpeza manual se necessário
       }
     });
-
+    console.log('edition: ', data);
     return data as IEditionResponse;
   } catch (error: any) {
     if (error.message === 'NEXT_REDIRECT') throw error;
