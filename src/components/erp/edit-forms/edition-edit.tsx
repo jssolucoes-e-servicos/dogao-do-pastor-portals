@@ -68,13 +68,16 @@ export function EditionForm({ edition }: Props) {
   });
 
   async function onSubmit(values: FormValues) {
+    const { active, ...rest } = values;
     const payload = {
-      ...values,
+      ...rest,
       productionDate: new Date(values.productionDate).toISOString(),
       saleStartDate: new Date(values.saleStartDate).toISOString(),
       saleEndDate: new Date(values.saleEndDate).toISOString(),
       autoEnableDate: values.autoEnableDate ? new Date(values.autoEnableDate).toISOString() : undefined,
       autoDisableDate: values.autoDisableDate ? new Date(values.autoDisableDate).toISOString() : undefined,
+      // active só vai no payload quando for edição
+      ...(isEdit && active !== undefined ? { active } : {}),
     };
 
     const res = await UpsertEditionAction(isEdit, edition?.id || null, payload);
