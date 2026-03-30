@@ -9,7 +9,7 @@ export const getActiveEdition = async (): Promise<IEditionResponse> => {
   try {
     const data = await fetchApi(FetchCtx.PUBLIC, `/editions/get-active`, {
       next: { 
-        revalidate: 1800, // Tempo em segundos (30 minutos)
+        revalidate: 60,//1800, // Tempo em segundos (30 minutos)
         tags: ['active-edition'] // Tag para limpeza manual se necessário
       }
     });
