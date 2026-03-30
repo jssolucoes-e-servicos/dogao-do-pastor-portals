@@ -29,8 +29,8 @@ const formSchema = z.object({
   saleEndDate: z.string().min(1, "Fim das vendas obrigatório"),
   autoEnableDate: z.string().optional(),
   autoDisableDate: z.string().optional(),
-  limitSale: z.number().min(1, "Limite mínimo é 1"),
-  dogPrice: z.number().min(0.01, "Preço inválido"),
+  limitSale: z.coerce.number().min(1, "Limite mínimo é 1"),
+  dogPrice: z.coerce.number().min(0.01, "Preço inválido"),
   active: z.boolean().optional(),
 });
 
