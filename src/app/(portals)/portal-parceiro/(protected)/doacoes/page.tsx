@@ -1,75 +1,65 @@
 'use client';
 
 import { GetPartnerStatsAction } from '@/actions/partners/get-stats.action';
-import { usePermissions } from '@/hooks/use-permissions';
+import { GetPartnerSessionAction } from '@/actions/auth/get-partner-session.action';
+import { ListWithdrawalsAction } from '@/actions/donations/list-withdrawals.action';
 import useSWR from 'swr';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Dog, History, QrCode, ShoppingBag } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import { ReceiptModal } from './components/receipt-modal';
 import { WithdrawalModal } from './components/withdrawal-modal';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-export const dynamic = 'force-dynamic'
-interface WithdrawalRecord {
-  id: string;
-  time: string;
-  total: number;
-  status: 'PENDENTE' | 'RETIRADO' | 'CANCELADO';
-  details: { label: string; quantity: number }[];
-}
+export const dynamic = 'force-dynamic';
 
 export default function DoacoesPage() {
-  const { user } = usePermissions();
+  const [partnerId, setPartnerId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalRecord | null>(null);
-  
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  useEffect(() => {
+    GetPartnerSessionAction().then((s) => { if (s) setPartnerId(s.id); });
+  }, []);
+
   const { data: statsRes, mutate: mutateStats } = useSWR(
-    user?.id ? ['partner-stats', user.id] : null,
+    partnerId ? ['partner-stats', partnerId] : null,
     ([, id]) => GetPartnerStatsAction(id as string),
-    { refreshInterval: 10000 }
+    { refreshInterval: 15000 }
   );
 
-  const stats = statsRes?.data || {
-    totalRecebido: 0,
-    jaRetirados: 0,
-    disponiveis: 0
-  };
+  const { data: withdrawalsRes, mutate: mutateWithdrawals } = useSWR(
+    partnerId ? ['partner-withdrawals', partnerId] : null,
+    ([, id]) => ListWithdrawalsAction(id as string),
+    { refreshInterval: 15000 }
+  );
 
-  const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
+  const stats = statsRes?.data || { totalRecebido: 0, jaRetirados: 0, disponiveis: 0 };
+  const withdrawals: any[] = withdrawalsRes?.data || []; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  const handleNewWithdrawal = (pickupTime: string, items: any[]) => {
-    const totalQty = items.length;
-    const groups = new Map<string, number>();
-    
-    items.forEach((item: any) => {
-      const label = item.removedIngredients.length > 0 
-        ? `Personalizado (Sem: ${item.removedIngredients.join(', ')})` 
-        : 'Dogão Completo';
-      groups.set(label, (groups.get(label) || 0) + 1);
-    });
-
-    const details = Array.from(groups.entries()).map(([label, quantity]) => ({ label, quantity }));
-
-    const newRecord: WithdrawalRecord = {
-      id: Math.random().toString(36).substring(2, 7).toUpperCase(),
-      time: pickupTime,
-      total: totalQty,
-      status: 'PENDENTE',
-      details
-    };
-
-    setWithdrawals([newRecord, ...withdrawals]);
+  const handleWithdrawalCreated = (withdrawal: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     mutateStats();
-
-    toast.success(`Agendamento realizado para às ${pickupTime}!`);
-  };
-
-  const openReceipt = (withdrawal: WithdrawalRecord) => {
+    mutateWithdrawals();
     setSelectedWithdrawal(withdrawal);
     setIsReceiptOpen(true);
+  };
+
+  const statusLabel: Record<string, string> = {
+    PENDING:   'Pendente',
+    CONFIRMED: 'Em Produção',
+    COMPLETED: 'Pronto',
+    DELIVERED: 'Finalizado',
+    CANCELLED: 'Rejeitado',
+  };
+  const statusColor: Record<string, string> = {
+    PENDING:   'bg-orange-100 text-orange-700',
+    CONFIRMED: 'bg-blue-100 text-blue-700',
+    COMPLETED: 'bg-emerald-100 text-emerald-700',
+    DELIVERED: 'bg-green-100 text-green-700',
+    CANCELLED: 'bg-red-100 text-red-600',
   };
 
   return (
@@ -79,17 +69,13 @@ export default function DoacoesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Doações Recebidas</h1>
           <p className="text-muted-foreground font-medium">Gerencie o saldo e agende a retirada na IVC.</p>
         </div>
-        <Button 
-          size="lg" 
-          onClick={() => setIsModalOpen(true)}
+        <Button size="lg" onClick={() => setIsModalOpen(true)}
           className="bg-orange-600 hover:bg-orange-700 shadow-lg gap-2 h-14 px-8 text-lg font-bold"
-          disabled={stats.disponiveis <= 0}
-        >
+          disabled={stats.disponiveis <= 0 || !partnerId}>
           <ShoppingBag className="w-6 h-6" /> Solicitar Retirada
         </Button>
       </div>
 
-      {/* Cards de Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-white border-none shadow-sm">
           <CardHeader className="pb-2 text-center">
@@ -99,7 +85,7 @@ export default function DoacoesPage() {
         </Card>
         <Card className="bg-white border-none shadow-sm">
           <CardHeader className="pb-2 text-center">
-            <CardDescription className="uppercase font-bold text-[10px] tracking-widest text-slate-400">Total Agendado</CardDescription>
+            <CardDescription className="uppercase font-bold text-[10px] tracking-widest text-slate-400">Já Retirados</CardDescription>
             <CardTitle className="text-3xl font-black text-slate-400">{stats.jaRetirados}</CardTitle>
           </CardHeader>
         </Card>
@@ -113,7 +99,7 @@ export default function DoacoesPage() {
 
       <div className="space-y-4">
         <h3 className="font-black flex items-center gap-2 text-slate-800 uppercase tracking-tight">
-          <History className="w-5 h-5 text-orange-600"/> Agenda de Retiradas
+          <History className="w-5 h-5 text-orange-600" /> Agenda de Retiradas
         </h3>
 
         {withdrawals.length === 0 ? (
@@ -125,65 +111,76 @@ export default function DoacoesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {withdrawals.map((w) => (
-              <Card key={w.id} className="overflow-hidden border-l-4 border-l-orange-500 shadow-sm flex flex-col">
-                <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
-                  <div className="flex items-center gap-2 text-orange-700 font-bold">
-                    <Clock className="w-4 h-4" /> {w.time}
+            {withdrawals.map((w: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+              const totalItems = w.items?.length || 0;
+              const scheduledTime = w.scheduledAt
+                ? format(new Date(w.scheduledAt), "HH:mm 'de' dd/MM", { locale: ptBR })
+                : '—';
+              const groups = new Map<string, { label: string; quantity: number }>();
+              (w.items || []).forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                const key = (item.removedIngredients || []).sort().join('|') || 'completo';
+                const label = item.removedIngredients?.length > 0
+                  ? `Sem: ${item.removedIngredients.join(', ')}` : 'Dogão Completo';
+                if (groups.has(key)) groups.get(key)!.quantity++;
+                else groups.set(key, { label, quantity: 1 });
+              });
+
+              return (
+                <Card key={w.id} className="overflow-hidden border-l-4 border-l-orange-500 shadow-sm flex flex-col">
+                  <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-orange-700 font-bold text-sm">
+                      <Clock className="w-4 h-4" /> {scheduledTime}
+                    </div>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase ${statusColor[w.status] || 'bg-slate-100 text-slate-500'}`}>
+                      {statusLabel[w.status] || w.status}
+                    </span>
                   </div>
-                  <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
-                    #{w.id}
-                  </span>
-                </div>
-                <CardContent className="p-4 space-y-4 flex-1">
-                  <div className="flex items-center gap-3 border-b pb-3">
+                  <CardContent className="p-4 space-y-3 flex-1">
+                    <div className="flex items-center gap-3 border-b pb-3">
                       <div className="bg-orange-100 p-2 rounded-lg text-orange-600">
                         <Dog className="w-6 h-6" />
                       </div>
                       <div>
                         <p className="text-sm text-slate-500 leading-none">Total de dogs</p>
-                        <p className="text-2xl font-black text-slate-800">{w.total}</p>
+                        <p className="text-2xl font-black text-slate-800">{totalItems}</p>
                       </div>
-                  </div>
-
-                  <div className="space-y-2">
-                      {w.details.map((detail, idx) => (
-                        <div key={idx} className="flex justify-between text-xs items-start gap-4">
-                          <span className="text-slate-600 font-medium leading-tight">• {detail.label}</span>
-                          <span className="font-black text-slate-800 whitespace-nowrap">{detail.quantity} un</span>
+                    </div>
+                    <div className="space-y-1">
+                      {Array.from(groups.values()).map((g, idx) => (
+                        <div key={idx} className="flex justify-between text-xs">
+                          <span className="text-slate-600">• {g.label}</span>
+                          <span className="font-black">{g.quantity}x</span>
                         </div>
                       ))}
+                    </div>
+                  </CardContent>
+                  <div className="p-3 bg-slate-50/50 border-t">
+                    <Button variant="outline" size="sm"
+                      className="w-full text-[10px] font-bold uppercase tracking-widest gap-2"
+                      onClick={() => { setSelectedWithdrawal(w); setIsReceiptOpen(true); }}>
+                      <QrCode className="w-3 h-3" /> Ver Comprovante
+                    </Button>
                   </div>
-                </CardContent>
-                <div className="p-3 bg-slate-50/50 border-t grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-[10px] font-bold uppercase tracking-widest gap-2"
-                    onClick={() => openReceipt(w)}
-                  >
-                    <QrCode className="w-3 h-3" /> Comprovante
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-red-600">
-                    Cancelar
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
 
-      <WithdrawalModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        availableBalance={stats.disponiveis}
-        onConfirm={handleNewWithdrawal}
-      />
+      {partnerId && (
+        <WithdrawalModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          availableBalance={stats.disponiveis}
+          partnerId={partnerId}
+          onConfirm={handleWithdrawalCreated}
+        />
+      )}
 
-      <ReceiptModal 
-        isOpen={isReceiptOpen} 
-        onClose={() => setIsReceiptOpen(false)} 
+      <ReceiptModal
+        isOpen={isReceiptOpen}
+        onClose={() => setIsReceiptOpen(false)}
         withdrawal={selectedWithdrawal}
       />
     </div>

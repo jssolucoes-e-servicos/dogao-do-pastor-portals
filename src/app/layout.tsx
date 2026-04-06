@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { PostHogProvider } from "@/components/posthog-provider";
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 
@@ -19,13 +20,14 @@ export default function RootLayout({
         suppressHydrationWarning={true}
         className="h-full antialiased bg-background"
       >
-        {/* Este wrapper garante que nada vaze horizontalmente */}
-        <div className="relative flex min-h-screen flex-col overflow-x-hidden">
-          <main className="flex-1 w-full max-w-[100vw]">
-            {children}
-          </main>
-        </div>
-        <Toaster richColors position="bottom-right" />
+        <PostHogProvider>
+          <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+            <main className="flex-1 w-full max-w-[100vw]">
+              {children}
+            </main>
+          </div>
+          <Toaster richColors position="bottom-right" />
+        </PostHogProvider>
       </body>
     </html>
   );

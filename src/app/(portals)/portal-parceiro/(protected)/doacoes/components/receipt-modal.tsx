@@ -48,6 +48,14 @@ export function ReceiptModal({ isOpen, onClose, withdrawal }: any) {
 
   if (!withdrawal) return null;
 
+  // Dados reais do withdrawal
+  const withdrawalId = withdrawal.id?.slice(-6).toUpperCase() || '------';
+  const scheduledAt = withdrawal.scheduledAt
+    ? new Date(withdrawal.scheduledAt).toLocaleString('pt-BR')
+    : '—';
+  const totalItems = withdrawal.items?.length || 0;
+  const qrValue = `DOGAO-RETIRADA-${withdrawal.id}`;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">
@@ -61,15 +69,17 @@ export function ReceiptModal({ isOpen, onClose, withdrawal }: any) {
           <div className="p-4 bg-white border-2 border-slate-100 rounded-xl shadow-inner">
             <QRCodeSVG 
               id="qr-svg-logic"
-              value={`DOGAO-${withdrawal.id}`} 
+              value={qrValue}
               size={180} 
               level="H" 
             />
           </div>
           
-          <div className="text-center">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Código da Doação</p>
-            <p className="text-3xl font-black text-slate-800">#{withdrawal.id}</p>
+          <div className="text-center space-y-1">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Código da Retirada</p>
+            <p className="text-3xl font-black text-slate-800">#{withdrawalId}</p>
+            <p className="text-xs text-slate-500">{scheduledAt}</p>
+            <p className="text-sm font-bold text-orange-600">{totalItems} dog{totalItems !== 1 ? 's' : ''}</p>
           </div>
         </div>
 

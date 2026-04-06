@@ -1,12 +1,12 @@
 "use client"
 
+import { AuthPartnerLogoutAction } from "@/actions/auth/partner-login.action"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import Cookies from "js-cookie"
 import { LogOut, PackageSearch, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 const menuItems = [
   /* { name: "Home", href: "/portal-parceiro", icon: Home }, */
@@ -16,13 +16,9 @@ const menuItems = [
 
 export function PartnerHeader() {
   const pathname = usePathname()
-  const router = useRouter()
 
-  const handleLogout = () => {
-    Cookies.remove("ddp-prt-00");
-    Cookies.remove("ddp-prt-01");
-    router.push("/portal-parceiro/acesso")
-    router.refresh()
+  const handleLogout = async () => {
+    await AuthPartnerLogoutAction();
   }
 
   return (

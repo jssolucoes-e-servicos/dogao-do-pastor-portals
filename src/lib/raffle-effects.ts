@@ -4,28 +4,34 @@ let raffleAudio: HTMLAudioElement | null = null;
 export function playRaffleMusic() {
   try {
     if (raffleAudio) { raffleAudio.pause(); raffleAudio = null; }
-    raffleAudio = new Audio("/assets/songs/ruffle.mp3");
-    raffleAudio.loop = true;
-    raffleAudio.volume = 0.7;
-    void raffleAudio.play();
+    const audio = new Audio("/assets/songs/ruffle.mp3");
+    audio.volume = 0.7;
+    // Reinicia manualmente ao terminar — evita gap do loop nativo em alguns browsers
+    audio.addEventListener("ended", () => {
+      audio.currentTime = 0;
+      void audio.play();
+    });
+    raffleAudio = audio;
+    void audio.play();
   } catch { /* silencia */ }
 }
 
 export function stopRaffleMusic() {
   if (!raffleAudio) return;
-  // Fade out suave em 800ms
   const audio = raffleAudio;
-  const step = audio.volume / 20;
+  raffleAudio = null;
+  const startVol = audio.volume;
+  const steps = 20;
+  let step = 0;
   const fade = setInterval(() => {
-    if (audio.volume > step) {
-      audio.volume = Math.max(0, audio.volume - step);
-    } else {
+    step++;
+    audio.volume = Math.max(0, startVol * (1 - step / steps));
+    if (step >= steps) {
       audio.pause();
       audio.currentTime = 0;
       clearInterval(fade);
     }
   }, 40);
-  raffleAudio = null;
 }
 export function launchConfetti() {
   const canvas = document.createElement("canvas");

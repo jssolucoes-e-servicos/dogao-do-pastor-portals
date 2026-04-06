@@ -1,5 +1,6 @@
 'use client';
 
+import { CreateWithdrawalAction } from '@/actions/donations/create-withdrawal.action';
 import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -18,20 +19,19 @@ interface WithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
   availableBalance: number;
-  onConfirm: (pickupTime: string, items: IOrderItem[]) => void;
+  partnerId: string;
+  onConfirm: (withdrawal: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-export function WithdrawalModal({ isOpen, onClose, availableBalance, onConfirm }: WithdrawalModalProps) {
+export function WithdrawalModal({ isOpen, onClose, availableBalance, partnerId, onConfirm }: WithdrawalModalProps) {
   const [pickupTime, setPickupTime] = useState('');
   const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reseta ou inicializa o modal ao abrir
   useEffect(() => {
     if (isOpen) {
       setPickupTime('');
-      // Inicia com todos os dogs como "Completos" por padrão
       const initialItems = Array.from({ length: availableBalance }, (_, i) => ({
         id: Date.now() + i,
         removedIngredients: [],
@@ -60,7 +60,6 @@ export function WithdrawalModal({ isOpen, onClose, availableBalance, onConfirm }
       toast.error("Limite do saldo atingido.");
       return;
     }
-
     setOrderItems(prev => {
       if (delta > 0) {
         const itemToCopy = prev.find(i => (i.removedIngredients.sort().join('|') || 'completo') === key);
@@ -85,12 +84,37 @@ export function WithdrawalModal({ isOpen, onClose, availableBalance, onConfirm }
     if (currentTotal === 0) return toast.error("Quantidade inválida.");
 
     setIsSubmitting(true);
-    // Simula delay de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    onConfirm(pickupTime, orderItems);
-    setIsSubmitting(false);
-    onClose();
+    try {
+      const grouped = new Map<string, { quantity: number; removedIngredients: string[] }>();
+      orderItems.forEach(item => {
+        const key = item.removedIngredients.sort().join('|') || 'completo';
+        if (grouped.has(key)) {
+          grouped.get(key)!.quantity += 1;
+        } else {
+          grouped.set(key, { quantity: 1, removedIngredients: item.removedIngredients });
+        }
+      });
+
+      const today = new Date();
+      const [h, m] = pickupTime.split(':');
+      today.setHours(parseInt(h), parseInt(m), 0, 0);
+
+      const res = await CreateWithdrawalAction({
+        partnerId,
+        scheduledAt: today.toISOString(),
+        items: Array.from(grouped.values()),
+      });
+
+      if (res.success && res.data) {
+        toast.success("Agendamento realizado com sucesso!");
+        onConfirm(res.data);
+        onClose();
+      } else {
+        toast.error(res.error || "Erro ao criar retirada");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -109,8 +133,8 @@ export function WithdrawalModal({ isOpen, onClose, availableBalance, onConfirm }
           </div>
 
           <div className="space-y-2">
-            <Label className="flex items-center gap-2"><Clock className="w-4 h-4 text-orange-600"/> Horário de retirada</Label>
-            <Input type="time" value={pickupTime} onChange={e => setPickupTime(e.target.value)} className="h-12 text-lg font-bold text-center"/>
+            <Label className="flex items-center gap-2"><Clock className="w-4 h-4 text-orange-600" /> Horário de retirada</Label>
+            <Input type="time" value={pickupTime} onChange={e => setPickupTime(e.target.value)} className="h-12 text-lg font-bold text-center" />
           </div>
 
           <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">

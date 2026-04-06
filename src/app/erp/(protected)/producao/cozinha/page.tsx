@@ -4,15 +4,13 @@ import { CommandsPaginateAction } from "@/actions/commands/paginate.action";
 import { UpdateCommandStatusAction } from "@/actions/commands/update-status.action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CommandStatusEnum } from "@/common/enums/command-status.enum";
 import { 
   ChefHat, 
-  Clock, 
   CheckCircle2, 
   PlayCircle,
   RefreshCw,
-  Utensils,
   LayoutDashboard
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -97,89 +95,104 @@ export default function ProducaoCozinhaPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {commands.map((command: any) => (
           <Card 
             key={command.id} 
-            className={`
-              border-none shadow-sm overflow-hidden transition-all duration-300
+            className={`border-none shadow-sm overflow-hidden transition-all duration-300
               ${command.status === CommandStatusEnum.IN_PRODUCTION 
                 ? 'bg-orange-50 dark:bg-orange-950/10 ring-2 ring-orange-500/30' 
-                : 'bg-white dark:bg-slate-900'}
-            `}
+                : 'bg-white dark:bg-slate-900'}`}
           >
-            <div className={`h-1.5 w-full ${command.status === CommandStatusEnum.IN_PRODUCTION ? 'bg-orange-500 animate-pulse' : 'bg-slate-100 dark:bg-slate-800'}`} />
+            <div className={`h-1 w-full ${command.status === CommandStatusEnum.IN_PRODUCTION ? 'bg-orange-500 animate-pulse' : 'bg-slate-100 dark:bg-slate-800'}`} />
             
-            <CardHeader className="pb-3 pt-4 space-y-0">
-              <div className="flex items-center justify-between mb-2">
-                <Badge 
-                   variant={command.status === CommandStatusEnum.PENDING ? 'outline' : 'default'} 
-                   className={`
-                     uppercase font-black text-[9px] tracking-widest px-2 py-0.5
-                     ${command.status === CommandStatusEnum.PENDING 
-                        ? 'border-slate-200 text-slate-500' 
-                        : 'bg-orange-600 hover:bg-orange-600'}
-                   `}
-                >
-                  {command.status === CommandStatusEnum.PENDING ? 'Aguardando' : 'Em Montagem'}
-                </Badge>
-                <div className="flex items-center gap-1 text-[10px] font-black text-slate-400 italic">
-                  <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(command.createdAt), { addSuffix: true, locale: ptBR })}
+            <CardHeader className="pb-2 pt-3 px-4 space-y-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xl font-black tracking-tighter text-orange-600 italic">
+                  #{command.sequentialId}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <Badge 
+                    className={`uppercase font-black text-[8px] px-1.5 py-0 h-4
+                      ${command.status === CommandStatusEnum.PENDING 
+                        ? 'bg-slate-100 text-slate-500 border-none' 
+                        : 'bg-orange-500 text-white border-none'}`}
+                  >
+                    {command.status === CommandStatusEnum.PENDING ? 'Aguardando' : 'Montando'}
+                  </Badge>
+                  <span className="text-[9px] font-bold text-slate-400">
+                    {formatDistanceToNow(new Date(command.createdAt), { addSuffix: false, locale: ptBR })}
+                  </span>
                 </div>
               </div>
-              <CardTitle className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="text-orange-600 italic">#{command.sequentialId}</span>
-              </CardTitle>
-              <p className="text-[10px] font-bold text-slate-400 uppercase truncate mt-0.5 tracking-tight border-b border-slate-50 dark:border-slate-800 pb-2">
-                {command.order?.customerName || 'Retirada Direta'}
+              <p className="text-[10px] font-bold text-slate-500 uppercase truncate">
+                {command.order?.customerName || command.withdrawal?.partner?.name || 'Retirada Direta'}
               </p>
             </CardHeader>
             
-            <CardContent className="pt-2 space-y-4">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-2 mb-2">
-                    <Utensils className="h-3.5 w-3.5 text-orange-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Ingredientes</span>
-                </div>
-                {command.order?.items?.[0]?.removedIngredients?.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                        {command.order.items[0].removedIngredients.map((ing: string) => (
-                            <Badge key={ing} variant="destructive" className="text-[9px] font-bold px-2 py-0 uppercase bg-red-100 text-red-600 border-none hover:bg-red-100">
-                                SEM {ing}
-                            </Badge>
-                        ))}
+            <CardContent className="px-4 pb-3 pt-2 space-y-2">
+              {/* Dogs agrupados */}
+              <div className="space-y-1">
+                {(() => {
+                  // Para doações: usa withdrawal.items; para pedidos: usa commandItems ou order.items
+                  const isWithdrawal = !!command.withdrawalId && !command.orderId;
+                  const cmdItems: any[] = command.commandItems?.length > 0
+                    ? command.commandItems
+                    : isWithdrawal
+                      ? (command.withdrawal?.items || [])
+                      : (command.order?.items || []);
+
+                  // Se é doação e não tem items detalhados, mostra só a quantidade total
+                  if (isWithdrawal && cmdItems.length === 0 && command.quantity) {
+                    return (
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-xs font-black text-orange-600 shrink-0">{command.quantity}x</span>
+                        <span className="text-[10px] font-black text-emerald-600 uppercase">Completo ✓</span>
+                      </div>
+                    );
+                  }
+                  const groups: Record<string, { count: number; removed: string[] }> = {};
+                  for (const item of cmdItems) {
+                    const removed: string[] = item.removedIngredients || [];
+                    const key = [...removed].sort().join('|') || '__completo__';
+                    if (!groups[key]) groups[key] = { count: 0, removed };
+                    groups[key].count++;
+                  }
+                  return Object.values(groups).map((g, i) => (
+                    <div key={i} className="flex items-start gap-1.5">
+                      <span className="text-xs font-black text-orange-600 shrink-0">{g.count}x</span>
+                      {g.removed.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {g.removed.map((ing: string) => (
+                            <span key={ing} className="text-[8px] font-black uppercase bg-red-600 text-white px-1.5 py-0.5 rounded-md">
+                              -{ing}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-black text-emerald-600 uppercase">Completo ✓</span>
+                      )}
                     </div>
-                ) : (
-                    <p className="text-[11px] font-black text-emerald-600 italic uppercase bg-emerald-50 dark:bg-emerald-950/20 w-fit px-2 rounded-md">Padrão da Casa ✨</p>
-                )}
+                  ));
+                })()}
               </div>
 
-              {command.order?.observations && (
-                  <div className="bg-blue-50/50 dark:bg-blue-950/10 p-3 rounded-xl border border-blue-100/50 dark:border-blue-900/20">
-                     <p className="text-[9px] font-black uppercase text-blue-500 mb-1">Obs:</p>
-                     <p className="text-[11px] text-blue-900 dark:text-blue-300 font-bold leading-relaxed italic">
-                        "{command.order.observations}"
-                     </p>
-                  </div>
-              )}
-
-              <div className="pt-2 flex gap-2">
+              <div className="flex gap-2 pt-1">
                 {command.status === CommandStatusEnum.PENDING ? (
                   <Button 
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-black uppercase tracking-widest text-[10px] gap-2 h-11 border-none transition-all active:scale-95 group shadow-lg shadow-slate-900/10"
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 font-black uppercase text-[9px] gap-1.5 h-9 border-none transition-all active:scale-95"
                     onClick={() => handleUpdateStatus(command.id, CommandStatusEnum.IN_PRODUCTION)}
                   >
-                    <PlayCircle className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                    Iniciar Montagem
+                    <PlayCircle className="h-3.5 w-3.5" />
+                    Iniciar
                   </Button>
                 ) : (
                   <Button 
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] gap-2 h-11 border-none transition-all active:scale-95 group shadow-lg shadow-emerald-600/20"
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[9px] gap-1.5 h-9 border-none transition-all active:scale-95"
                     onClick={() => handleUpdateStatus(command.id, CommandStatusEnum.PRODUCED)}
                   >
-                    <CheckCircle2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                    Concluir Dogão
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Concluído
                   </Button>
                 )}
               </div>

@@ -84,17 +84,34 @@ export default function SellerRafflePage() {
     const winnerName = pool[Math.floor(Math.random() * pool.length)];
     const startTime = performance.now();
     let lastSwap = 0;
+    let finished = false;
 
     playRaffleMusic();
 
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (displayRef.current) displayRef.current.textContent = winnerName;
+      setWinner(winnerName);
+      setSpinning(false);
+      stopRaffleMusic();
+      launchConfetti();
+      playWinSound();
+      const entry = { winner: winnerName, date: new Date().toLocaleString("pt-BR"), editionId: editionIdRef.current };
+      saveToHistory("vendedores", entry);
+      setHistory(getHistory("vendedores"));
+    };
+
+    const fallbackTimer = setTimeout(finish, SPIN_DURATION + 500);
+
     const frame = (now: number) => {
+      if (finished) return;
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / SPIN_DURATION, 1);
-      // Intervalo cresce de 40ms → 500ms com easing cúbico
       const interval = 40 + 460 * (progress ** 3);
 
       if (now - lastSwap >= interval) {
-        // Atualiza DOM diretamente — zero re-render do React
         if (displayRef.current) {
           displayRef.current.textContent = pool[Math.floor(Math.random() * pool.length)];
         }
@@ -104,16 +121,8 @@ export default function SellerRafflePage() {
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(frame);
       } else {
-        // Só agora atualiza o React state
-        if (displayRef.current) displayRef.current.textContent = winnerName;
-        setWinner(winnerName);
-        setSpinning(false);
-        stopRaffleMusic();
-        launchConfetti();
-        playWinSound();
-        const entry = { winner: winnerName, date: new Date().toLocaleString("pt-BR"), editionId: editionIdRef.current };
-        saveToHistory("vendedores", entry);
-        setHistory(getHistory("vendedores"));
+        clearTimeout(fallbackTimer);
+        finish();
       }
     };
 

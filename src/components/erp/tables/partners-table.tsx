@@ -26,7 +26,8 @@ export function PartnersTable({ initialData }: Props) {
   const { data: response, isLoading } = useSWR([`partners-list`, page, search], () => PartnersPaginateAction(page, search), {
     fallbackData: { success: true, data: initialData },
     keepPreviousData: true,
-    revalidateOnFocus: false,
+    revalidateOnFocus: true,
+    refreshInterval: 30000,
   });
 
   const displayData = response?.data?.data || [];

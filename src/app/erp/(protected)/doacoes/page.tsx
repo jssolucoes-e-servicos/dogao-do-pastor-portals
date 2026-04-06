@@ -152,7 +152,7 @@ export default function DoacoesPage() {
               Gestão de <span className="text-rose-500">Doações</span>
             </h1>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-1">
-              Social & Missão • Impactando vidas através do alimento
+              Módulo Social • Gestão de Doações
             </p>
           </div>
         </div>
@@ -169,10 +169,10 @@ export default function DoacoesPage() {
       <Tabs defaultValue="partners" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl h-14 w-full md:w-auto mb-6">
           <TabsTrigger value="partners" className="rounded-xl h-12 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-rose-500 font-black uppercase text-[10px] tracking-widest gap-2">
-            <Building2 className="h-4 w-4" /> Por Parceiro
+            <Building2 className="h-4 w-4" /> Saldos
           </TabsTrigger>
           <TabsTrigger value="sales" className="rounded-xl h-12 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-rose-500 font-black uppercase text-[10px] tracking-widest gap-2">
-            <Gift className="h-4 w-4" /> Por Venda
+            <Gift className="h-4 w-4" /> Pedidos
           </TabsTrigger>
         </TabsList>
 
@@ -202,7 +202,7 @@ export default function DoacoesPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-                             {p.logo ? <img src={p.logo as string} alt={(p.name as string) || "Logo"} className="h-full w-full object-cover" /> : <Building2 className="h-5 w-5 text-slate-400" />}
+                            {p.logo ? <img src={p.logo as string} alt={(p.name as string) || "Logo"} className="h-full w-full object-cover" /> : <Building2 className="h-5 w-5 text-slate-400" />}
                           </div>
                           <div>
                             <p className="font-black text-xs uppercase tracking-tight">{p.name}</p>
@@ -210,8 +210,11 @@ export default function DoacoesPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center font-black text-lg text-rose-500 italic">
-                        {p.balance} <span className="text-[10px] uppercase not-italic text-slate-400 ml-1">Lanches</span>
+                      <TableCell className="text-center font-black text-lg text-amber-500 italic">
+                        {p.balance > 0 && ( p.balance === 1 ? '1' : p.balance )}
+                        <span className="text-[10px] uppercase not-italic text-slate-400 ml-1">
+                          {p.balance <= 0 ? 'Nenhum Dogão': ( p.balance === 1 ? 'Dogão' : ('Dogões' ))}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right">
                         <Dialog>
@@ -221,21 +224,21 @@ export default function DoacoesPage() {
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[700px] border-none shadow-2xl rounded-[2.5rem] bg-white dark:bg-slate-900 p-0 overflow-hidden">
-                             <div className="h-2 w-full bg-rose-500" />
-                             <div className="p-8">
+                            <div className="h-2 w-full bg-rose-500" />
+                            <div className="p-8">
                                 <DialogHeader className="mb-6">
                                   <div className="flex items-center gap-4 mb-2">
-                                     <div className="h-16 w-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-inner border border-white dark:border-slate-700">
+                                    <div className="h-16 w-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-inner border border-white dark:border-slate-700">
                                         {selectedPartner?.logo ? <img src={selectedPartner.logo as string} alt={(selectedPartner.name as string) || "Logo"} className="h-full w-full object-cover" /> : <Building2 className="h-8 w-8 text-rose-500" />}
-                                     </div>
-                                     <div>
+                                    </div>
+                                    <div>
                                         <DialogTitle className="text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white leading-none">
                                           {selectedPartner?.name}
                                         </DialogTitle>
                                         <div className="flex items-center gap-3 mt-1.5 font-bold uppercase text-[10px] tracking-widest text-slate-400">
                                           <span className="flex items-center gap-1.5"><Users className="h-3 w-3" /> {selectedPartner?.responsibleName}</span>
                                           <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                                          <span className="text-rose-500 font-black italic text-sm">{selectedPartner?.balance} Lanches Disponíveis</span>
+                                          <span className="text-rose-500 font-black italic text-sm">{selectedPartner?.balance <= 0 ? 'Nenhum Dogão': ( selectedPartner?.balance === 1 ? '1 Dogão' : (`${selectedPartner?.balance} Dogões` ))}</span>
                                         </div>
                                      </div>
                                   </div>

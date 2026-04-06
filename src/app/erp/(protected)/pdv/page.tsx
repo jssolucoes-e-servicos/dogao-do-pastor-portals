@@ -17,6 +17,7 @@ import { UpdateCommandStatusAction } from "@/actions/commands/update-status.acti
 import { GetPaymentStatusAction } from "@/actions/payments/get-status.action";
 import { ValidateTicketAction } from "@/actions/tickets/validate-ticket.action";
 import { usePermissions } from "@/hooks/use-permissions";
+import { NumbersHelper } from "@/common/helpers/numbers-helper";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,7 @@ export default function PDVPage() {
 
   // Sale State
   const [customer, setCustomer] = useState({ name: "", phone: "", cpf: "" });
+  const [fieldErrors, setFieldErrors] = useState({ name: false, phone: false, cpf: false });
   const [deliveryOption, setDeliveryOption] = useState<string>("PICKUP");
   const [address, setAddress] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
@@ -161,6 +163,8 @@ export default function PDVPage() {
 
   // Google Maps Refs
   const addressInputRef = useRef<HTMLInputElement>(null);
+  const cpfInputRef = useRef<HTMLInputElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const { data: statusRes, mutate: mutateStatus } = useSWR<SaleStatus>(
@@ -230,8 +234,8 @@ export default function PDVPage() {
   }, [isPaymentPolling, paymentPollingId, deliveryOption]);
 
   const handleFinalizeOrderAfterPayment = () => {
-    // Reset state and show success
     setCustomer({ name: "", phone: "", cpf: "" });
+    setFieldErrors({ name: false, phone: false, cpf: false });
     setItems([]);
     setPaymentMethod(undefined);
     setIsPaymentStep(false);
@@ -242,6 +246,8 @@ export default function PDVPage() {
     setCustomerAddresses([]);
     setSelectedAddressId(undefined);
     setIsNewAddress(false);
+    setSelectedPartnerId("");
+    setCashReceived(0);
     mutateStatus();
     mutateCheckIn();
     mutatePickups();
@@ -309,33 +315,103 @@ export default function PDVPage() {
     setIsCheckInModalOpen(true);
   };
 
-  const handleSearchCustomer = async (key: 'cpf' | 'phone' | 'name', value: string) => {
-    if (!value) return;
-    const cleanValue = key === 'name' ? value : value.replace(/\D/g, "");
-    if (cleanValue.length < 3) return;
-    setIsVoucherLoading(true); 
-    const res = await SearchCustomerAction({ [key === 'name' ? 'search' : key]: cleanValue });
+  const handleSearchCustomer = async (key: 'cpf' | 'phone', value: string) => {
+    const clean = value.replace(/\D/g, "");
+    if (!clean) return;
+
+    // Valida CPF antes de buscar
+    if (key === 'cpf' && !NumbersHelper.isValidCPF(clean)) return;
+
+    setIsVoucherLoading(true);
+    const res = await SearchCustomerAction({ [key]: clean });
     setIsVoucherLoading(false);
 
     if (res.success && res.data?.data) {
-      const items = res.data.data;
-      if (items.length === 1) {
-        const found = items[0];
-        setCustomer({
-          name: found.name || "",
-          phone: found.phone || "",
-          cpf: found.cpf || ""
-        });
+      const found_items = res.data.data;
+      if (found_items.length === 1) {
+        const found = found_items[0];
+        // Só preenche nome se o campo estiver vazio ou for "CLIENTE - {cpf}"
+        const shouldFillName = !customer.name || customer.name.startsWith('CLIENTE');
+        setCustomer(prev => ({
+          cpf: found.cpf || prev.cpf,
+          phone: found.phone || prev.phone,
+          name: shouldFillName ? (found.name || prev.name) : prev.name,
+        }));
         setCustomerAddresses(found.addresses || []);
         setSelectedAddressId(undefined);
         setIsNewAddress(false);
         toast.success(`Cliente encontrado: ${found.name}`);
-      } else if (items.length > 1) {
-        setCustomerOptions(items);
+      } else if (found_items.length > 1) {
+        setCustomerOptions(found_items);
         setIsCustomerSelectOpen(true);
       }
     }
   };
+
+  const handleCpfChange = (value: string) => {
+    const clean = value.replace(/\D/g, "").slice(0, 11);
+    setCustomer(prev => ({ ...prev, cpf: clean }));
+    if (clean.length === 11) {
+      if (NumbersHelper.isValidCPF(clean)) {
+        setFieldErrors(prev => ({ ...prev, cpf: false }));
+        handleSearchCustomer('cpf', clean);
+      } else {
+        setFieldErrors(prev => ({ ...prev, cpf: true }));
+        toast.error("CPF inválido");
+        setTimeout(() => cpfInputRef.current?.focus(), 50); // tem valor mas é inválido — foca
+      }
+    } else {
+      setFieldErrors(prev => ({ ...prev, cpf: false }));
+    }
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const clean = value.replace(/\D/g, "").slice(0, 11);
+    setCustomer(prev => ({ ...prev, phone: clean }));
+    setFieldErrors(prev => ({ ...prev, phone: false }));
+    if (clean.length >= 3) {
+      const thirdDigit = parseInt(clean[2]);
+      const isCell = thirdDigit >= 7;
+      const limit = isCell ? 11 : 10;
+      if (clean.length === limit) {
+        handleSearchCustomer('phone', clean);
+      }
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    const clean = customer.phone.replace(/\D/g, "");
+    if (clean.length === 0) {
+      // Vazio — só avisa, não força foco (usuário pode estar preenchendo CPF primeiro)
+      setFieldErrors(prev => ({ ...prev, phone: true }));
+      toast.error("Telefone é obrigatório");
+      return;
+    }
+    if (clean.length < 10) {
+      setFieldErrors(prev => ({ ...prev, phone: true }));
+      toast.error("Telefone inválido — mínimo 10 dígitos");
+      setTimeout(() => phoneInputRef.current?.focus(), 50); // tem valor mas incompleto — foca
+      return;
+    }
+    if (clean.length >= 3) {
+      const thirdDigit = parseInt(clean[2]);
+      const isCell = thirdDigit >= 7;
+      const expectedLength = isCell ? 11 : 10;
+      if (clean.length !== expectedLength) {
+        setFieldErrors(prev => ({ ...prev, phone: true }));
+        toast.error(isCell
+          ? "Celular deve ter 11 dígitos (DDD + 9 + número)"
+          : "Telefone fixo deve ter 10 dígitos (DDD + número)"
+        );
+        setTimeout(() => phoneInputRef.current?.focus(), 50);
+      } else {
+        setFieldErrors(prev => ({ ...prev, phone: false }));
+      }
+    }
+  };
+
+  // Cliente válido para habilitar opções
+  const hasValidCustomer = customer.name.length >= 3 && customer.phone.replace(/\D/g, "").length >= 10;
 
   const total = items.reduce((acc, item) => acc + item.price, 0);
   const dogPrice = statusRes?.edition?.dogPrice || 24.99;
@@ -435,6 +511,7 @@ export default function PDVPage() {
           removedIngredients: i.removedIngredients,
         })),
         sellerId: isSellerOnly ? user?.sellerId : undefined,
+        partnerId: deliveryOption === 'DONATE' && selectedPartnerId ? selectedPartnerId : undefined,
       };
 
       const res = await CreatePdvAction(dto);
@@ -457,8 +534,9 @@ export default function PDVPage() {
         } else {
           toast.success("Venda realizada com sucesso!");
 
-          // Auto Check-in for PDV Pickup orders
+          // Auto Check-in for PDV Pickup orders — pequeno delay para garantir que o pedido foi salvo
           if (deliveryOption === 'PICKUP') {
+            await new Promise(r => setTimeout(r, 500));
             await handleCheckIn(res.data.id);
           }
 
@@ -544,40 +622,60 @@ export default function PDVPage() {
              <CardContent className="p-8 pt-0 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">CPF</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                        CPF <span className="text-slate-300 text-[8px]">(opcional)</span>
+                      </Label>
                       <div className="relative">
                         <Input
-                          placeholder="000.000.000-00"
+                          ref={cpfInputRef}
+                          placeholder="00000000000"
                           value={customer.cpf}
-                          onChange={(e) => setCustomer({ ...customer, cpf: e.target.value })}
-                          onBlur={() => handleSearchCustomer('cpf', customer.cpf)}
-                          className="h-12 rounded-xl border-none bg-slate-50 dark:bg-slate-950 px-4 font-bold text-xs"
+                          onChange={(e) => handleCpfChange(e.target.value)}
+                          maxLength={11}
+                          className={`h-12 rounded-xl border-none px-4 font-bold text-xs ${fieldErrors.cpf ? 'bg-red-50 dark:bg-red-950/20 ring-2 ring-red-400' : 'bg-slate-50 dark:bg-slate-950'}`}
                         />
-                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+                        {isVoucherLoading && <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-400 animate-pulse" />}
+                        {fieldErrors.cpf && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 text-xs font-black">✕</span>}
                       </div>
                    </div>
                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telefone / Celular</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                        Telefone / Celular <span className="text-red-500">*</span>
+                      </Label>
                       <div className="relative">
                         <Input
-                          placeholder="(00) 00000-0000"
+                          ref={phoneInputRef}
+                          placeholder="51900000000"
                           value={customer.phone}
-                          onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-                          onBlur={() => handleSearchCustomer('phone', customer.phone)}
-                          className="h-12 rounded-xl border-none bg-slate-50 dark:bg-slate-950 px-4 font-bold text-xs"
+                          onChange={(e) => handlePhoneChange(e.target.value)}
+                          onBlur={handlePhoneBlur}
+                          maxLength={11}
+                          className={`h-12 rounded-xl border-none px-4 font-bold text-xs ${fieldErrors.phone ? 'bg-red-50 dark:bg-red-950/20 ring-2 ring-red-400' : 'bg-slate-50 dark:bg-slate-950'}`}
                         />
-                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+                        {isVoucherLoading && <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-400 animate-pulse" />}
+                        {fieldErrors.phone && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 text-xs font-black">✕</span>}
                       </div>
                    </div>
                 </div>
 
                 <div className="space-y-2">
-                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</Label>
+                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo <span className="text-red-500">*</span></Label>
                    <Input
                      placeholder="DIGITE O NOME DO CLIENTE"
                      value={customer.name}
-                     onChange={(e) => setCustomer({ ...customer, name: e.target.value.toUpperCase() })}
-                     className="h-12 rounded-xl border-none bg-slate-50 dark:bg-slate-950 px-4 font-bold text-xs"
+                     onChange={(e) => {
+                       setCustomer({ ...customer, name: e.target.value.toUpperCase() });
+                       setFieldErrors(prev => ({ ...prev, name: false }));
+                     }}
+                     onBlur={() => {
+                       if (customer.name.trim().length > 0 && customer.name.trim().length < 3) {
+                         setFieldErrors(prev => ({ ...prev, name: true }));
+                         toast.error("Nome muito curto — mínimo 3 caracteres");
+                       } else if (customer.name.trim().length === 0) {
+                         setFieldErrors(prev => ({ ...prev, name: true }));
+                       }
+                     }}
+                     className={`h-12 rounded-xl border-none px-4 font-bold text-xs ${fieldErrors.name ? 'bg-red-50 dark:bg-red-950/20 ring-2 ring-red-400' : 'bg-slate-50 dark:bg-slate-950'}`}
                    />
                 </div>
 
@@ -595,6 +693,7 @@ export default function PDVPage() {
                           key={opt.id}
                           type="button"
                           variant="outline"
+                          disabled={!hasValidCustomer}
                           onClick={() => setDeliveryOption(opt.id)}
                           className={`h-20 rounded-2xl flex flex-col gap-2 font-black border-2 transition-all ${
                             deliveryOption === opt.id
@@ -755,6 +854,7 @@ export default function PDVPage() {
                 </div>
                  <Button
                     onClick={() => setIsAddItemOpen(true)}
+                    disabled={!hasValidCustomer}
                     className="rounded-2xl h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-orange-600 transition-all font-black uppercase text-[10px] gap-2 px-6"
                  >
                     <Plus className="h-4 w-4" /> Adicionar Dogão
@@ -1215,21 +1315,17 @@ export default function PDVPage() {
                               </Badge>
                             </div>
                              <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">
-                               {order?.customerPhone || 'SEM TELEFONE'} • {order?.items?.length || 0} Itens
+                               {order?.customerPhone || 'SEM TELEFONE'} • {(order?.items || []).filter((i: any) => !i.commanded).length}/{order?.items?.length || 0} dogs disponíveis
                              </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <Button
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setIsOrderDetailsOpen(true);
-                            }}
-                            className="rounded-2xl h-11 border-slate-200 font-black uppercase text-[10px] gap-2 px-6"
+                            onClick={() => handleOpenCheckInModal(order)}
+                            className="rounded-2xl h-11 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] gap-2 px-6"
                           >
-                            <Search className="h-3.5 w-3.5" /> Ver Detalhes
+                            <ChefHat className="h-3.5 w-3.5" /> Check-in
                           </Button>
                         </div>
                       </div>
@@ -1443,7 +1539,14 @@ export default function PDVPage() {
         order={checkInOrder ? {
           id: checkInOrder.id,
           customerName: checkInOrder.customerName,
-          items: checkInOrder.items || [],
+          customerPhone: checkInOrder.customerPhone,
+          paymentType: checkInOrder.paymentType,
+          deliveryOption: checkInOrder.deliveryOption,
+          deliveryTime: checkInOrder.deliveryTime,
+          observations: checkInOrder.observations,
+          allItems: checkInOrder.items || [],
+          items: (checkInOrder.items || []).filter((i: any) => !i.commanded),
+          commands: checkInOrder.commands || [],
         } : null}
       />
 

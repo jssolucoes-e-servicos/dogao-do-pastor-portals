@@ -4,11 +4,10 @@ import { CommandsPaginateAction } from "@/actions/commands/paginate.action";
 import { UpdateCommandStatusAction } from "@/actions/commands/update-status.action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CommandStatusEnum } from "@/common/enums/command-status.enum";
 import { 
   Truck, 
-  Clock, 
   MapPin, 
   RefreshCw,
   Navigation,
@@ -94,65 +93,92 @@ export default function EntregasFilaPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {commands.map((command: any) => (
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {commands.map((command: any) => {
+          const order = command.order;
+          const obs = order?.observations || '';
+          const hasPromo = obs.toLowerCase().includes('coca') || obs.toLowerCase().includes('combo') || obs.toLowerCase().includes('promo');
+          const isMoney = order?.paymentType === 'MONEY';
+          const isPOS = order?.paymentType === 'POS';
+          const totalValue: number = order?.totalValue || 0;
+
+          // Detecta troco: obs contém "troco" ou "recebido" com valor
+          const trocoMatch = obs.match(/receb[iu].*?R?\$?\s*([\d.,]+)/i) || obs.match(/troco.*?R?\$?\s*([\d.,]+)/i);
+          const receivedValue = trocoMatch ? parseFloat(trocoMatch[1].replace(',', '.')) : 0;
+          const troco = receivedValue > totalValue ? receivedValue - totalValue : 0;
+
+          return (
           <Card 
             key={command.id} 
-            className="border-none shadow-sm overflow-hidden transition-all duration-300 bg-white dark:bg-slate-900 hover:shadow-xl hover:-translate-y-1"
+            className="border-none shadow-sm overflow-hidden transition-all duration-300 bg-white dark:bg-slate-900 hover:shadow-md"
           >
-            <div className="h-1.5 w-full bg-purple-500" />
+            <div className="h-1 w-full bg-purple-500" />
             
-            <CardHeader className="pb-2 pt-4 space-y-0">
-              <div className="flex items-center justify-between mb-2">
-                <Badge className="uppercase font-black text-[9px] tracking-widest px-2 py-0.5 bg-purple-100 text-purple-600 hover:bg-purple-100 dark:bg-purple-900/40 dark:text-purple-300 border-none">
-                  Aguardando Saída
-                </Badge>
-                <div className="flex items-center gap-1 text-[10px] font-black text-slate-400 italic">
-                  <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(command.updatedAt), { addSuffix: true, locale: ptBR })}
-                </div>
+            <CardHeader className="pb-2 pt-3 px-4 space-y-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xl font-black tracking-tighter text-purple-600 italic">#{command.sequentialId}</span>
+                <span className="text-[9px] font-bold text-slate-400">
+                  {formatDistanceToNow(new Date(command.updatedAt), { addSuffix: false, locale: ptBR })}
+                </span>
               </div>
-              <CardTitle className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="text-purple-600 italic">#{command.sequentialId}</span>
-              </CardTitle>
-              <p className="text-[10px] font-bold text-slate-500 uppercase truncate mt-0.5 tracking-tight">
-                {command.order?.customerName || 'Cliente'}
-              </p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase truncate">{order?.customerName || 'Cliente'}</p>
             </CardHeader>
             
-            <CardContent className="pt-2 space-y-3">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-2 mb-2 border-b border-slate-100 dark:border-slate-800 pb-1">
-                    <MapPin className="h-3 w-3 text-purple-500" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Endereço de Entrega</span>
+            <CardContent className="px-4 pb-3 pt-1 space-y-2">
+              {/* Endereço compacto */}
+              {order?.address && (
+                <div className="flex items-start gap-1.5">
+                  <MapPin className="h-3 w-3 text-purple-500 shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-bold text-slate-600 dark:text-slate-300 leading-tight">
+                    {order.address.street}, {order.address.number} — {order.address.neighborhood}
+                  </p>
                 </div>
-                <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
-                    {command.order?.address?.street}, {command.order?.address?.number}
-                </p>
-                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 uppercase italic">
-                    {command.order?.address?.neighborhood} - {command.order?.address?.city}
-                </p>
-              </div>
+              )}
 
-              {command.order?.observations && (
-                  <div className="bg-orange-50/50 dark:bg-orange-950/10 p-2.5 rounded-lg border border-orange-100/50 dark:border-orange-900/20">
-                     <p className="text-[9px] font-black uppercase text-orange-600 mb-1">Atenção ao Entregador:</p>
-                     <p className="text-[10px] text-orange-900 dark:text-orange-300 font-bold leading-relaxed italic">
-                        "{command.order.observations}"
-                     </p>
+              {/* Maquininha */}
+              {isPOS && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <span className="text-lg">💳</span>
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-blue-700">Levar Maquininha</p>
+                    <p className="text-[9px] text-blue-600 font-bold">R$ {totalValue.toFixed(2)}</p>
                   </div>
+                </div>
+              )}
+
+              {/* Troco */}
+              {isMoney && (
+                <div className={`rounded-xl px-3 py-2 border ${troco > 0 ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}>
+                  <p className="text-[9px] font-black uppercase text-slate-500">Pagamento Dinheiro</p>
+                  <p className="text-[9px] font-bold text-slate-600">Total: R$ {totalValue.toFixed(2)}</p>
+                  {troco > 0 && (
+                    <>
+                      <p className="text-[9px] font-bold text-amber-700">Recebido: R$ {receivedValue.toFixed(2)}</p>
+                      <p className="text-sm font-black text-amber-700 uppercase">TROCO: R$ {troco.toFixed(2)}</p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Obs só se for promocional */}
+              {hasPromo && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2">
+                  <p className="text-[9px] font-black uppercase text-orange-600 mb-0.5">Atenção</p>
+                  <p className="text-[10px] font-bold text-orange-800 italic">&ldquo;{obs}&rdquo;</p>
+                </div>
               )}
 
               <Button 
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest text-[10px] gap-2 h-11 border-none transition-all active:scale-95 group shadow-lg shadow-purple-600/20"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black uppercase text-[9px] gap-1.5 h-9 border-none transition-all active:scale-95"
                 onClick={() => handleDispatch(command.id)}
               >
-                <Navigation className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                Despachar Pedido
+                <Navigation className="h-3.5 w-3.5" />
+                Despachar
               </Button>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
 
         {commands.length === 0 && !isLoading && (
             <div className="col-span-full flex flex-col items-center justify-center py-24 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 animate-in zoom-in duration-500">

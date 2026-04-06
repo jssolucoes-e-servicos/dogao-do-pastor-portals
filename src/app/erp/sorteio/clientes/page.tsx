@@ -85,10 +85,30 @@ export default function CustomerRafflePage() {
     const winnerName = pool[Math.floor(Math.random() * pool.length)];
     const startTime = performance.now();
     let lastSwap = 0;
+    let finished = false;
 
     playRaffleMusic();
 
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (displayRef.current) displayRef.current.textContent = winnerName;
+      setWinner(winnerName);
+      setSpinning(false);
+      stopRaffleMusic();
+      launchConfetti();
+      playWinSound();
+      const entry = { winner: winnerName, date: new Date().toLocaleString("pt-BR"), editionId: editionIdRef.current };
+      saveToHistory("clientes", entry);
+      setHistory(getHistory("clientes"));
+    };
+
+    // Fallback absoluto — garante que termina mesmo se rAF travar
+    const fallbackTimer = setTimeout(finish, SPIN_DURATION + 500);
+
     const frame = (now: number) => {
+      if (finished) return;
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / SPIN_DURATION, 1);
       const interval = 40 + 460 * (progress ** 3);
@@ -103,15 +123,8 @@ export default function CustomerRafflePage() {
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(frame);
       } else {
-        if (displayRef.current) displayRef.current.textContent = winnerName;
-        setWinner(winnerName);
-        setSpinning(false);
-        stopRaffleMusic();
-        launchConfetti();
-        playWinSound();
-        const entry = { winner: winnerName, date: new Date().toLocaleString("pt-BR"), editionId: editionIdRef.current };
-        saveToHistory("clientes", entry);
-        setHistory(getHistory("clientes"));
+        clearTimeout(fallbackTimer);
+        finish();
       }
     };
     rafRef.current = requestAnimationFrame(frame);
