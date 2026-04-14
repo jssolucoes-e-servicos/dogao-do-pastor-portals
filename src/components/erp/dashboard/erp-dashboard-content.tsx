@@ -77,11 +77,17 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
-  const { hasAnyRole, isIT, loading: permissionsLoading } = usePermissions(initialUser);
+  const { hasAnyRole, isIT, loading: permissionsLoading, canAccess } = usePermissions(initialUser);
   
-  // Só ativa os flags após montar
-  const canSeeFinance = mounted && hasAnyRole(['IT', 'ADMIN', 'FINANCE']);
-  const canSeeOperations = mounted && hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'RECEPTION', 'MANAGER', 'LEADER', 'EXPEDITION']);
+  // Controle por slug de módulo (sistema dinâmico) com fallback legado
+  const canSeeFinance    = mounted && (canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'Financeiro', 'Administração']));
+  const canSeeOperations = mounted && (canAccess('erp.production') || canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'RECEPTION', 'EXPEDITION', 'Recepção', 'Expedição', 'Financeiro', 'Administração']));
+  const canSeeRanking    = mounted && (canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'MANAGER', 'LEADER', 'Administração', 'Financeiro', 'Supervisor de Rede', 'Líder de Célula']));
+  const canSeeCharts     = mounted && (canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'Financeiro', 'Administração']));
+  const canSeeDonations  = mounted && (canAccess('erp.donations') || hasAnyRole(['IT', 'ADMIN', 'RECEPTION', 'EXPEDITION', 'Recepção', 'Expedição', 'Administração']));
+  const canSeeKitchen    = mounted && (canAccess('erp.production') || hasAnyRole(['IT', 'ADMIN', 'KITCHEN', 'Cozinha', 'Administração']));
+  const isSupervisor     = mounted && hasAnyRole(['MANAGER', 'Supervisor de Rede']);
+  const isLeader         = mounted && hasAnyRole(['LEADER', 'Líder de Célula']);
 
   if ((isLoading || (!initialUser && permissionsLoading) || !mounted) && !data) return <DashboardSkeleton />;
 
@@ -225,43 +231,65 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
 
       {/* Conteúdo Secundário */}
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-          <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3"><CardTitle className="text-[10px] font-black tracking-widest uppercase">Performance Células</CardTitle></CardHeader>
-          <CardContent><RankingList data={data?.rankingCells || []} /></CardContent>
-        </Card>
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-          <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3"><CardTitle className="text-[10px] font-black tracking-widest uppercase">Performance Vendedores</CardTitle></CardHeader>
-          <CardContent><RankingList data={data?.rankingSellers || []} color="blue" /></CardContent>
-        </Card>
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-          <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3"><CardTitle className="text-[10px] font-black tracking-widest uppercase">Últimas Transações</CardTitle></CardHeader>
-          <CardContent><RecentDonations list={data?.recentOrders || []} /></CardContent>
-        </Card>
+        {canSeeRanking && (
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+            <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3">
+              <CardTitle className="text-[10px] font-black tracking-widest uppercase">
+                {isSupervisor ? 'Performance da Rede' : 'Performance Células'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent><RankingList data={data?.rankingCells || []} /></CardContent>
+          </Card>
+        )}
+        {canSeeRanking && (
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+            <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3">
+              <CardTitle className="text-[10px] font-black tracking-widest uppercase">Performance Vendedores</CardTitle>
+            </CardHeader>
+            <CardContent><RankingList data={data?.rankingSellers || []} color="blue" /></CardContent>
+          </Card>
+        )}
+        {canSeeFinance && (
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+            <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3">
+              <CardTitle className="text-[10px] font-black tracking-widest uppercase">Últimas Transações</CardTitle>
+            </CardHeader>
+            <CardContent><RecentDonations list={data?.recentOrders || []} /></CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Gráficos de Distribuição */}
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-          <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><PieIcon className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Pagamentos</CardTitle></CardHeader>
-          <CardContent><DistributionChart data={data?.paymentMethodsStats?.map((p: any) => ({ label: p.method, value: p.count })) || []} /></CardContent>
-        </Card>
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-          <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><Truck className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Tipos de Pedido</CardTitle></CardHeader>
-          <CardContent>
-            <DistributionChart 
-              data={data?.logisticsStats?.map((l: any) => ({ label: logisticsLabels[l.label] || l.label, value: l.value })) || []} 
-              colors={["#3b82f6", "#10b981", "#f59e0b"]} 
-            />
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-          <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><Heart className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Doações / Parcerias</CardTitle></CardHeader>
-          <CardContent><DistributionChart data={data?.donationsByPartner || []} colors={["#ef4444", "#ec4899", "#f43f5e"]} /></CardContent>
-        </Card>
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-          <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><UtensilsCrossed className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Retiradas Cozinha</CardTitle></CardHeader>
-          <CardContent><IngredientsChart data={data?.ingredientsStats || []} /></CardContent>
-        </Card>
+        {canSeeCharts && (
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+            <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><PieIcon className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Pagamentos</CardTitle></CardHeader>
+            <CardContent><DistributionChart data={data?.paymentMethodsStats?.map((p: any) => ({ label: p.method, value: p.count })) || []} /></CardContent>
+          </Card>
+        )}
+        {canSeeOperations && (
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+            <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><Truck className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Tipos de Pedido</CardTitle></CardHeader>
+            <CardContent>
+              <DistributionChart 
+                data={data?.logisticsStats?.map((l: any) => ({ label: logisticsLabels[l.label] || l.label, value: l.value })) || []} 
+                colors={["#3b82f6", "#10b981", "#f59e0b"]} 
+              />
+            </CardContent>
+          </Card>
+        )}
+        {canSeeDonations && (
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+            <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><Heart className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Doações / Parcerias</CardTitle></CardHeader>
+            <CardContent><DistributionChart data={data?.donationsByPartner || []} colors={["#ef4444", "#ec4899", "#f43f5e"]} /></CardContent>
+          </Card>
+        )}
+        {canSeeKitchen && (
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+            <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><UtensilsCrossed className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Retiradas Cozinha</CardTitle></CardHeader>
+            <CardContent><IngredientsChart data={data?.ingredientsStats || []} /></CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

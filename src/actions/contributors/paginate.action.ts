@@ -12,7 +12,7 @@ export async function ContributorsPaginateAction(
   try {
     const params = new URLSearchParams({
       page: page.toString(),
-      perPage: "10"
+      perPage: "20"
     });
 
     if (search) params.append("search", search);

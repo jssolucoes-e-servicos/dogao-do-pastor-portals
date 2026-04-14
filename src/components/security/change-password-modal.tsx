@@ -25,7 +25,7 @@ export function ChangePasswordModal({ isOpen, onClose, userId, typeUser  }: Chan
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState('');
   const [validationToken, setValidationToken] = useState<string | null>(null);
-  
+
   const [passwords, setPasswords] = useState({
     new: '',
     confirm: ''
