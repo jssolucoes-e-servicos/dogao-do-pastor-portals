@@ -44,6 +44,7 @@ const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/erp" },
   { title: "PDV (Ponto de Venda)", url: "/erp/pdv", icon: ShoppingCart, slug: "erp.pos" },
   { title: "Minhas Vendas", url: "/erp/minhas-vendas", icon: ShoppingCart, slug: "erp.my-sales" },
+  { title: "Meu Acerto", url: "/erp/meu-acerto", icon: HandCoins, slug: "erp.my-settlement" },
   {
     title: "Vendas & Clientes",
     icon: ShoppingCart,
@@ -62,6 +63,14 @@ const menuItems = [
       { title: "Painel de Doações", url: "/erp/doacoes" },
       { title: "Curadoria", url: "/erp/pedidos/doacoes-curadoria" },
       { title: "Entidades Parceiras", url: "/erp/parceiros" },
+    ],
+  },
+  {
+    title: "Financeiro",
+    icon: HandCoins,
+    slug: "erp.finance",
+    items: [
+      { title: "Acertos de Dinheiro", url: "/erp/financeiro/acertos" },
     ],
   },
   {
