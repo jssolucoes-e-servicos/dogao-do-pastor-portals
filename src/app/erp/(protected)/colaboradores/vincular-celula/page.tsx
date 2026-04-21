@@ -62,7 +62,7 @@ export default function LinkContributorToCellPage() {
       const res = await ContributorsPaginateAction(1, contributorSearch)
       if (res.success && res.data) {
         // Garantir que é um array para evitar o erro .length reported
-        setContributors(res.data.items || [])
+        setContributors(res.data.data || [])
       } else {
         setContributors([])
       }
@@ -83,7 +83,7 @@ export default function LinkContributorToCellPage() {
       // Opcional: recarregar o colaborador para mostrar as células atualizadas
       const updatedRes = await ContributorsPaginateAction(1, contributorSearch)
       if (updatedRes.success && updatedRes.data) {
-        setContributors(updatedRes.data.items || [])
+        setContributors(updatedRes.data.data || [])
       }
     } else {
       toast.error(res.error || "Erro ao vincular")

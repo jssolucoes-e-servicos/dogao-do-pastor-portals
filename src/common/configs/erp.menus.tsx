@@ -3,7 +3,8 @@ import {
   PackageCheck, Settings, Shield, ShoppingCart,
   Trophy, Truck, UsersRound, type LucideIcon,
 } from "lucide-react";
-import { IMenuItem } from "@/common/interfaces";
+import { IMenuItem as MenuItem } from "@/common/interfaces";
+export type { MenuItem };
 import { MENU_MY_SALES } from "./menus/my-sales.menu";
 import { MENU_MY_CELL } from "./menus/my-cell.menu";
 import { MENU_MY_NETWORK } from "./menus/my-network.menu";
@@ -19,7 +20,7 @@ import { MENU_FINANCIAL } from "./menus/financial.menu";
 import { MENU_ORDERS } from "./menus/orders.menu";
 import { MENU_DONATIONS } from "./menus/donations.menu";
 
-export const ERP_MENU: IMenuItem[] = [
+export const ERP_MENU: MenuItem[] = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
