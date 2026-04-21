@@ -13,10 +13,20 @@ import { fetchApi, FetchCtx } from "@/lib/api";
 export default function MinhaRedeCelulasPage() {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
+  const [resolvedNetworkId, setResolvedNetworkId] = useState<string | null>(null);
   const { user } = useUser();
+
   useEffect(() => { setMounted(true); }, []);
 
-  const networkId = user?.supervisorNetworkId;
+  useEffect(() => {
+    if (!mounted) return;
+    if (user?.supervisorNetworkId) { setResolvedNetworkId(user.supervisorNetworkId); return; }
+    fetchApi(FetchCtx.ERP, '/contributors/me', { cache: 'no-store' })
+      .then((me: any) => setResolvedNetworkId(me?.cellNetworks?.[0]?.id ?? null))
+      .catch(() => setResolvedNetworkId(null));
+  }, [mounted, user?.supervisorNetworkId]);
+
+  const networkId = resolvedNetworkId;
 
   const { data: networkData, isLoading } = useSWR(
     mounted && networkId ? ["my-network-cells", networkId] : null,

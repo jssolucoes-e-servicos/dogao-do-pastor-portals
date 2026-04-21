@@ -77,17 +77,42 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
-  const { hasAnyRole, isIT, loading: permissionsLoading, canAccess } = usePermissions(initialUser);
+  const { loading: permissionsLoading, canAccess } = usePermissions(initialUser);
   
-  // Controle por slug de módulo (sistema dinâmico) com fallback legado
-  const canSeeFinance    = mounted && (canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'Financeiro', 'Administração']));
-  const canSeeOperations = mounted && (canAccess('erp.production') || canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'RECEPTION', 'EXPEDITION', 'Recepção', 'Expedição', 'Financeiro', 'Administração']));
-  const canSeeRanking    = mounted && (canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'MANAGER', 'LEADER', 'Administração', 'Financeiro', 'Supervisor de Rede', 'Líder de Célula']));
-  const canSeeCharts     = mounted && (canAccess('erp.orders') || hasAnyRole(['IT', 'ADMIN', 'FINANCE', 'Financeiro', 'Administração']));
-  const canSeeDonations  = mounted && (canAccess('erp.donations') || hasAnyRole(['IT', 'ADMIN', 'RECEPTION', 'EXPEDITION', 'Recepção', 'Expedição', 'Administração']));
-  const canSeeKitchen    = mounted && (canAccess('erp.production') || hasAnyRole(['IT', 'ADMIN', 'KITCHEN', 'Cozinha', 'Administração']));
-  const isSupervisor     = mounted && hasAnyRole(['MANAGER', 'Supervisor de Rede']);
-  const isLeader         = mounted && hasAnyRole(['LEADER', 'Líder de Célula']);
+  // ── Permissões dos cards (Sistema de Slugs erp.*) ─────────────────────────
+  // Faturamento: apenas Financeiro
+  const canSeeFinance    = mounted && canAccess('erp.finance');
+  
+  // Vendas (qtd), doações, pendentes: Operação, Expedição, Produção, Recepção + Financeiro
+  const canSeeOperations = mounted && (
+    canSeeFinance || 
+    canAccess('erp.production') || 
+    canAccess('erp.reception') || 
+    canAccess('erp.delivery')
+  );
+
+  // Ranking células/vendedores: Líderes, Supervisores, Financeiro
+  const canSeeRankingCells   = mounted && (canSeeFinance || canAccess('erp.my-network'));
+  const canSeeRankingSellers = mounted && (canSeeRankingCells || canAccess('erp.my-cell'));
+
+  // Gráfico de pagamentos: apenas Financeiro
+  const canSeePaymentChart = canSeeFinance;
+
+  // Tipos de pedido (logística): Operação, Expedição, Produção, Recepção
+  const canSeeLogisticsChart = canSeeOperations;
+
+  // Doações: Recepção, Expedição, Doações
+  const canSeeDonations  = mounted && (
+    canAccess('erp.donations') || 
+    canAccess('erp.reception') || 
+    canAccess('erp.delivery')
+  );
+
+  // Cozinha: Produção
+  const canSeeKitchen    = mounted && canAccess('erp.production');
+
+  const isSupervisor     = mounted && canAccess('erp.my-network');
+  const isLeader         = mounted && canAccess('erp.my-cell');
 
   if ((isLoading || (!initialUser && permissionsLoading) || !mounted) && !data) return <DashboardSkeleton />;
 
@@ -164,7 +189,80 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
         </div>
       )}
 
-      {/* Grid de Métricas */}
+      {/* ── Linha de Destaque: Meta e Doações ───────────────────────────── */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Card de Meta (70%) */}
+        <Card className="border-none shadow-xl bg-slate-900 text-white overflow-hidden relative flex-[7]">
+          {/* Efeito Visual de Fundo */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full -ml-24 -mb-24 blur-3xl" />
+          
+          <CardContent className="py-8 px-8 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">
+                  Performance Geral
+                </p>
+                <h3 className="text-3xl font-black italic uppercase tracking-tighter">
+                  Status da Meta Global
+                </h3>
+                <p className="text-slate-400 text-xs font-medium">
+                  Vendas realizadas na edição {data?.editionName || '---'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase text-slate-500">Atingimento</p>
+                  <div className="text-5xl font-black italic text-white tracking-tighter">
+                    {salesPercentage.toFixed(1)}%
+                  </div>
+                </div>
+                <div className="h-16 w-[1px] bg-slate-800 hidden md:block" />
+                <div>
+                  <p className="text-[10px] font-black uppercase text-slate-500">Quantidade</p>
+                  <div className="text-2xl font-black text-white">
+                    {totalDogsSold} <span className="text-slate-500 text-sm">/ {totalLimit}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 space-y-2">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                <span className="text-slate-500">Progresso</span>
+                <span className="text-orange-500">{totalDogsSold} vendidos</span>
+              </div>
+              <div className="h-4 w-full bg-slate-800 rounded-full overflow-hidden p-1 border border-slate-700/50">
+                <div 
+                  className="h-full bg-gradient-to-r from-orange-600 to-orange-400 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(234,88,12,0.4)]"
+                  style={{ width: `${salesPercentage}%` }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card de Doações (30%) - Integrado ao topo */}
+        <Card className="border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden relative flex-[3] flex flex-col justify-center">
+            <div className="absolute top-0 left-0 w-1 h-full bg-red-500" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 text-slate-500 mb-2">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.15em]">Missão / Doações</CardTitle>
+              <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-black text-slate-900 dark:text-white">
+                {data?.totalDonations || 0} 
+                <span className="text-[10px] font-bold text-slate-400 uppercase ml-2">Unidades</span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-widest">
+                Parcerias e Doações Diretas
+              </p>
+            </CardContent>
+          </Card>
+      </div>
+
+      {/* Grid de Métricas Secundárias */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {canSeeFinance && (
           <Card className="border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden relative">
@@ -181,33 +279,7 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
           </Card>
         )}
 
-        {canSeeOperations && (
-          <>
-            <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 text-slate-500">
-                <CardTitle className="text-[10px] font-black uppercase tracking-[0.15em]">Vendas (Qtd)</CardTitle>
-                <PackageCheck className="h-3.5 w-3.5 text-blue-500" />
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-baseline justify-between text-slate-900 dark:text-white font-black text-2xl">
-                  {totalDogsSold}
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Meta: {totalLimit}</span>
-                </div>
-                <Progress value={salesPercentage} className="h-1 bg-slate-100 dark:bg-slate-800" />
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 text-slate-500">
-                <CardTitle className="text-[10px] font-black uppercase tracking-[0.15em]">Missão / Doações</CardTitle>
-                <Heart className="h-3.5 w-3.5 text-red-500 fill-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-black text-slate-900 dark:text-white">{data?.totalDonations || 0} <span className="text-[10px] font-bold text-slate-400 uppercase">Unid.</span></div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+        {/* Card de Missão foi movido para o topo */}
 
         {canSeeFinance && (
           <Card className="border-none shadow-sm bg-red-50 dark:bg-red-950/20">
@@ -231,7 +303,7 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
 
       {/* Conteúdo Secundário */}
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-        {canSeeRanking && (
+        {canSeeRankingCells && (
           <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
             <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3">
               <CardTitle className="text-[10px] font-black tracking-widest uppercase">
@@ -241,7 +313,7 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
             <CardContent><RankingList data={data?.rankingCells || []} /></CardContent>
           </Card>
         )}
-        {canSeeRanking && (
+        {canSeeRankingSellers && (
           <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
             <CardHeader className="pb-2 border-b border-slate-50 dark:border-slate-800 mb-3">
               <CardTitle className="text-[10px] font-black tracking-widest uppercase">Performance Vendedores</CardTitle>
@@ -261,13 +333,13 @@ export function ErpDashboardContent({ user: initialUser }: { user?: any }) {
 
       {/* Gráficos de Distribuição */}
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
-        {canSeeCharts && (
+        {canSeePaymentChart && (
           <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
             <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><PieIcon className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Pagamentos</CardTitle></CardHeader>
             <CardContent><DistributionChart data={data?.paymentMethodsStats?.map((p: any) => ({ label: p.method, value: p.count })) || []} /></CardContent>
           </Card>
         )}
-        {canSeeOperations && (
+        {canSeeLogisticsChart && (
           <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
             <CardHeader className="flex items-center gap-2 flex-row text-slate-400 uppercase"><Truck className="h-3 w-3" /><CardTitle className="text-[9px] font-black tracking-tighter">Tipos de Pedido</CardTitle></CardHeader>
             <CardContent>

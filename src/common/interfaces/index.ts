@@ -1,3 +1,5 @@
+import { IMenuItem } from './menu-item.interface';
+import { IMenuSubItem } from './menu-subitem.interface';
 import { ICotentStepOrderType } from './content-step-order-type.interface';
 import { ICustomerOrderPayload } from './customer-order-payload.interface';
 import { IEditionResponse } from './edition-response.interface';
@@ -10,6 +12,8 @@ import { IResponse } from './response.interface';
 import { IStepOrderType } from './step-order-type.interface';
 
 export type {
-  ICotentStepOrderType, ICustomerOrderPayload, IEditionResponse, IOrderInit, IOrderItemSend, IPaginatedData, IPartnerVerifyLinkResponse, IResponse, IResponseObject, IStepOrderType
+  ICotentStepOrderType,
+  IMenuSubItem, IMenuItem,
+  ICustomerOrderPayload, IEditionResponse, IOrderInit, IOrderItemSend, IPaginatedData, IPartnerVerifyLinkResponse, IResponse, IResponseObject, IStepOrderType
 };
 

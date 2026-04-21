@@ -42,11 +42,10 @@ export const AuthContributorLoginAction = async (values: AuthContributorLoginAct
       id: data.user.id,
       name: data.user.name,
       roles: data.user.roles || [],
-      // IDs de vínculos para lógicas específicas se necessário
       sellerId: data.user.sellers?.[0]?.id || null,
       deliveryPersonId: data.user.deliveryPersons?.[0]?.id || null,
       leaderCellId: data.user.cells?.[0]?.id || null,
-      supervisorNetworkId: data.user.networks?.[0]?.id || null,
+      supervisorNetworkId: data.user.cellNetworks?.[0]?.id || null,
     };
 
     cookieStore.set("ddp-ctb-01", JSON.stringify(sessionUser), {

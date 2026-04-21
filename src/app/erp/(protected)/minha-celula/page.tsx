@@ -28,7 +28,25 @@ export default function MinhaCelulaPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  const cellId = user?.leaderCellId;
+  // Busca cellId do backend se não estiver no cookie
+  const [resolvedCellId, setResolvedCellId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (user?.leaderCellId) {
+      setResolvedCellId(user.leaderCellId);
+      return;
+    }
+    // Fallback: busca do backend
+    fetchApi(FetchCtx.ERP, '/contributors/me', { cache: 'no-store' })
+      .then((me: any) => {
+        const id = me?.cells?.[0]?.id ?? null;
+        setResolvedCellId(id);
+      })
+      .catch(() => setResolvedCellId(null));
+  }, [mounted, user?.leaderCellId]);
+
+  const cellId = resolvedCellId;
 
   const { data: cellData, mutate: mutateCell } = useSWR(
     mounted && cellId ? ["my-cell", cellId] : null,
@@ -76,17 +94,11 @@ export default function MinhaCelulaPage() {
     if (!memberForm.name || !memberForm.username || !memberForm.phone) return toast.error("Preencha todos os campos");
     setSaving(true);
     try {
-      const contributor = await fetchApi(FetchCtx.ERP, '/contributors', {
-        method: 'POST', body: JSON.stringify(memberForm),
+      await fetchApi(FetchCtx.ERP, '/contributors/invite-member', {
+        method: 'POST',
+        body: JSON.stringify({ ...memberForm, cellId }),
       });
-      const rolesData = await fetchApi(FetchCtx.ERP, '/roles?perPage=100', { cache: 'no-store' });
-      const vendedorRole = (rolesData?.data || []).find((r: any) =>
-        r.name.toLowerCase().includes('vendedor') || r.name.toLowerCase().includes('seller')
-      );
-      if (vendedorRole) {
-        await fetchApi(FetchCtx.ERP, `/contributors/${contributor.id}/roles/${vendedorRole.id}`, { method: 'POST' });
-      }
-      toast.success(`${memberForm.name} adicionado com perfil Vendedor`);
+      toast.success(`${memberForm.name} adicionado à célula com perfil Vendedor`);
       setMemberOpen(false);
       setMemberForm({ name: "", username: "", phone: "" });
       mutateCell();
@@ -126,7 +138,7 @@ export default function MinhaCelulaPage() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card className="border-none shadow-sm bg-blue-600 rounded-2xl">
           <CardContent className="p-5 text-center">
             <p className="text-[10px] font-black uppercase tracking-widest text-blue-100">Dogs Vendidos</p>
@@ -143,14 +155,6 @@ export default function MinhaCelulaPage() {
           <CardContent className="p-5 text-center">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vendedores</p>
             <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{sellers.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm bg-white dark:bg-slate-900 rounded-2xl">
-          <CardContent className="p-5 text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Receita</p>
-            <p className="text-xl font-black text-slate-900 dark:text-white mt-1">
-              {totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </p>
           </CardContent>
         </Card>
       </div>

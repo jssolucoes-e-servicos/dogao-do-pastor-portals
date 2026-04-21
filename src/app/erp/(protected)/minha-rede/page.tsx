@@ -12,10 +12,21 @@ import Link from "next/link";
 
 export default function MinhaRedePagePage() {
   const [mounted, setMounted] = useState(false);
+  const [resolvedNetworkId, setResolvedNetworkId] = useState<string | null>(null);
   const { user } = useUser();
+
   useEffect(() => { setMounted(true); }, []);
 
-  const networkId = user?.supervisorNetworkId;
+  // Resolve supervisorNetworkId do cookie ou busca do backend
+  useEffect(() => {
+    if (!mounted) return;
+    if (user?.supervisorNetworkId) { setResolvedNetworkId(user.supervisorNetworkId); return; }
+    fetchApi(FetchCtx.ERP, '/contributors/me', { cache: 'no-store' })
+      .then((me: any) => setResolvedNetworkId(me?.cellNetworks?.[0]?.id ?? null))
+      .catch(() => setResolvedNetworkId(null));
+  }, [mounted, user?.supervisorNetworkId]);
+
+  const networkId = resolvedNetworkId;
 
   const { data: networkData } = useSWR(
     mounted && networkId ? ["my-network", networkId] : null,
