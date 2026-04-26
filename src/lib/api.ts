@@ -66,7 +66,21 @@ async function fetchApi(
 
     if (response.status === 204) return null;
 
-    const data = await response.json();
+    const text = await response.text();
+    let data: any = null;
+
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        // Se falhar o parse e a resposta não for OK, usamos o texto como mensagem
+        if (!response.ok) {
+          throw new Error(text || "Erro na requisição");
+        }
+        // Se a resposta for OK mas o JSON for inválido, retornamos null ou o texto
+        data = text;
+      }
+    }
 
     if (!response.ok) {
       // 4. LÓGICA DE EXPIRAÇÃO (Apenas Cliente)
@@ -76,7 +90,7 @@ async function fetchApi(
         window.location.href = loginRoute;
       }
 
-      const errorMessage = data.message || "Ocorreu um erro na requisição";
+      const errorMessage = data?.message || "Ocorreu um erro na requisição";
       throw new Error(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage);
     }
 
