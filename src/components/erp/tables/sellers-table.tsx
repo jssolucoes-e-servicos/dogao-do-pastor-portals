@@ -36,7 +36,7 @@ export function SellersErpTable({ initialData }: Props) {
         description="Gerencie os vendedores cadastrados"
         onSearch={(val) => { setSearch(val); setPage(1); }}
         buttonLabel="Novo Vendedor"
-        buttonHref="/erp/vendedor/novo"
+        buttonHref="/erp/vendedores/novo"
       />
 
       <TablePageContent>
